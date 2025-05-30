@@ -14,6 +14,7 @@ void runtime_to_string(char *string);
 void print_time_to_lcd();
 void print_options_to_lcd(char options[4][18], int option, int max_option);
 void print_runtime_to_lcd(char command);
+void print_rand_to_lcd(uint32_t rand);
 void Set_time();
 uint32_t get_value(char show_text[]);
 

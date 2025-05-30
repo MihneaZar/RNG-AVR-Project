@@ -1,7 +1,8 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
-#include <stdio.h>
+// #include <stdio.h>
 
+// #include "usart.h"
 #include "timer.h"
 #include "ssd1306.h"
 #include "buttons.h"
@@ -38,11 +39,14 @@ void unused_pins() {
 void init_all() {
     sei();
     unused_pins();
-    Buttons_init();
+    // USART0_init();
+    // USART0_use_stdio();
     SSD1306_Init(SSD1306_ADDR);
     SSD1306_ClearScreen();
     SSD1306_UpdateScreen(SSD1306_ADDR);
     Timer2_init_systicks();
+    while (!SYSTICKS_PASSED(0, 2000));
+    Buttons_init();
     Set_time();
 }
 
@@ -66,7 +70,7 @@ int main() {
     print_options_to_lcd(options, option, max_option);
 
     uint32_t min_rand = 0;
-    uint32_t max_rand = 256;
+    uint32_t max_rand = 255;
 
     while(1) {
         if (blue_button && !show_runtime) {
@@ -96,7 +100,7 @@ int main() {
 
             // print on the screen a random value
             if (option == 2) {
-                random(min_rand, max_rand);
+                print_rand_to_lcd(random(min_rand, max_rand));
             }
 
             // set minimum and maximum random value
