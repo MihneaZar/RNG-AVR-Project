@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "usart.c": "cpp",
+        "interrupt.h": "c",
+        "delay.h": "c",
+        "usart.h": "c",
+        "io.h": "c",
+        "ssd1306.h": "c",
+        "timer.h": "c",
+        "inttypes.h": "c",
+        "stdio.h": "c",
+        "spi.h": "c",
+        "i2c.h": "c",
+        "print_to_lcd.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
