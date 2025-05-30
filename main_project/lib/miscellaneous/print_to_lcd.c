@@ -1,5 +1,6 @@
 #include "print_to_lcd.h"
 #include "timer.h"
+#include "buttons.h"
 
 void clear_lcd_line(int line) {
     char clear[LCD_LINE_LEN + 1];
@@ -130,3 +131,89 @@ void print_runtime_to_lcd(char command) {
     }
 }
 
+void Set_time() {
+    SSD1306_ClearScreen();
+    uint8_t digit_position = 0;
+
+    char time_string[12];
+    char position_string[9] = "^       ";
+    time_to_string(time_string);
+    SSD1306_SetPosition(CHAR_PIXELS * 5, 1);
+    SSD1306_DrawString(time_string);
+    SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
+    SSD1306_DrawString(position_string);
+    SSD1306_UpdateScreen(SSD1306_ADDR);
+
+    while (digit_position < 8) {
+        if (blue_button) {
+            blue_button = 0;
+            position_string[digit_position] = ' ';
+            digit_position++;
+            if (time_string[digit_position] == ':') {
+                digit_position++;
+            }
+            position_string[digit_position] = '^';
+            SSD1306_SetPosition(35, 2);
+            SSD1306_DrawString(position_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        if (red_button) {
+            red_button = 0;
+            next_time_digit(time_string, digit_position);
+            SSD1306_SetPosition(35, 1);
+            SSD1306_DrawString(time_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+    }
+    SSD1306_ClearScreen();
+    SSD1306_UpdateScreen(SSD1306_ADDR);
+    set_start_time(time_string);
+}
+
+uint32_t get_value(char show_text[]) {
+    SSD1306_ClearScreen();
+    SSD1306_SetPosition(0, 0);
+    SSD1306_DrawString(show_text);
+
+    uint8_t digit_position = 0;
+
+    char value_string[7]    = "000000";
+    char position_string[7] = "^     ";
+    SSD1306_SetPosition(42, 1);
+    SSD1306_DrawString(value_string);
+    SSD1306_SetPosition(42, 2);
+    SSD1306_DrawString(position_string);
+    SSD1306_UpdateScreen(SSD1306_ADDR);
+
+    while (digit_position < 6) {
+        if (blue_button) {
+            blue_button = 0;
+            position_string[digit_position] = ' ';
+            digit_position++;
+            position_string[digit_position] = '^';
+            SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+            SSD1306_DrawString(position_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        if (red_button) {
+            red_button = 0;
+            if (value_string[digit_position] - '0' == 9) {
+                value_string[digit_position] = '0';
+            } else {
+                value_string[digit_position]++;
+            }
+            SSD1306_SetPosition(CHAR_PIXELS * 6, 1);
+            SSD1306_DrawString(value_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+    }
+    uint32_t value = 0;
+    digit_position = 0;
+    while (value_string[digit_position] != '\0') {
+        value = value * 10 + value_string[digit_position] + '0';
+        digit_position++;
+    }
+    SSD1306_ClearScreen();
+    SSD1306_UpdateScreen(SSD1306_ADDR);
+    return value;
+}

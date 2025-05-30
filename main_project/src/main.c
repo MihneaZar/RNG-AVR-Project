@@ -22,44 +22,6 @@ void copy_string_values(volatile char *string, char *copy_string) {
     string[i] = '\0';
 }
 
-void Set_time() {
-    uint8_t digit_position = 0;
-
-    char time_string[12];
-    char position_string[9] = "^       ";
-    time_to_string(time_string);
-    SSD1306_SetPosition(35, 1);
-    SSD1306_DrawString(time_string);
-    SSD1306_SetPosition(35, 2);
-    SSD1306_DrawString(position_string);
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-
-    while (digit_position < 8) {
-        if (blue_button) {
-            blue_button = 0;
-            position_string[digit_position] = ' ';
-            digit_position++;
-            if (time_string[digit_position] == ':') {
-                digit_position++;
-            }
-            position_string[digit_position] = '^';
-            SSD1306_SetPosition(35, 2);
-            SSD1306_DrawString(position_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
-        }
-        if (red_button) {
-            red_button = 0;
-            next_time_digit(time_string, digit_position);
-            SSD1306_SetPosition(35, 1);
-            SSD1306_DrawString(time_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
-        }
-    }
-    SSD1306_ClearScreen();
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-    set_start_time(time_string);
-}
-
 /***
  * Disables all pull-ups for pins for power-saving.
  * 
@@ -84,6 +46,10 @@ void init_all() {
     Set_time();
 }
 
+uint32_t random(uint32_t rand_min, uint32_t max_rand) {
+    return rand_min + (systicks * systicks + red_count() * blue_count()) % (max_rand - rand_min + 1);
+}
+
 int main() { 
     init_all();
 
@@ -99,6 +65,9 @@ int main() {
     uint8_t max_option = 3;
     print_options_to_lcd(options, option, max_option);
 
+    uint32_t min_rand = 0;
+    uint32_t max_rand = 256;
+
     while(1) {
         if (blue_button && !show_runtime) {
             blue_button = 0;
@@ -107,6 +76,7 @@ int main() {
         }
         if (red_button && !show_runtime) {
             red_button = 0;
+
             // change time format
             if (option == 0) {
                 if (time_format == 24) {
@@ -116,19 +86,25 @@ int main() {
                 }  
                 print_time_to_lcd();
             }
+
             // show runtime
             if (option == 1) {
                 print_runtime_to_lcd('p');
                 runtime_ping = systicks;
                 show_runtime = 1;
             }
-            // 
+
+            // print on the screen a random value
             if (option == 2) {
-
+                random(min_rand, max_rand);
             }
-            // 
-            if (option == 3) {
 
+            // set minimum and maximum random value
+            if (option == 3) {
+                min_rand = get_value(" Set min rand val:");
+                max_rand = get_value(" Set max rand val:");
+                print_time_to_lcd();
+                print_options_to_lcd(options, option, max_option);
             }
         }
         if (SYSTICKS_PASSED(runtime_ping, 2000) && show_runtime) {

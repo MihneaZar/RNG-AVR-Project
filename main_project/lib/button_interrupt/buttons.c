@@ -6,8 +6,8 @@
 
 volatile uint8_t blue_button = 0; 
 volatile uint8_t red_button = 0;
-uint32_t last_blue = 0;
-uint32_t last_red = 0;
+volatile uint32_t last_blue = 0;
+volatile uint32_t last_red = 0;
 
 // PCINT18 / PD2 / 2 (RX) on Arduino Uno -> red button
 // PCINT19 / PD3 / 3 (TX) on Arduino UNO -> blue button
@@ -23,6 +23,14 @@ void Buttons_init() {
 
     // any edge generates interrupt
     EICRA |= (1 << ISC00);
+}
+
+uint32_t red_count() {
+    return systicks - last_red;
+}
+
+uint32_t blue_count() {
+    return systicks - last_blue;
 }
 
 // intrerupere on D
