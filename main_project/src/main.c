@@ -6,10 +6,10 @@
 #include "timer.h"
 #include "ssd1306.h"
 #include "buttons.h"
-#include "pff.h"
+// #include "pff.h"
 #include "print_to_lcd.h"
 
-FATFS fs;  // sistemul de fisiere
+// FATFS fs;  // sistemul de fisiere
 
 /* No. of seconds before going into standby mode */
 #define STANDBY 60
@@ -50,8 +50,11 @@ void init_all() {
     Set_time();
 }
 
-uint32_t random(uint32_t rand_min, uint32_t max_rand) {
-    return rand_min + (systicks * systicks + red_count() * blue_count()) % (max_rand - rand_min + 1);
+uint32_t random(uint32_t min_rand, uint32_t max_rand) {
+    uint32_t interval = max_rand - min_rand + 1;
+    uint32_t sys_in_interv = systicks % interval;
+    // printf("%ld\n%ld\n%ld\n%ld\n\n", sys_in_interv, left_blue_count() % interval, red_count() % interval, right_blue_count() % interval);
+    return min_rand + (red_count() % interval * sys_in_interv + (left_blue_count() % interval) * (right_blue_count() % interval)) % interval;
 }
 
 int main() { 
@@ -73,9 +76,9 @@ int main() {
     uint32_t max_rand = 255;
 
     while(1) {
-        if (blue_button && !show_runtime) {
-            blue_button = 0;
-            option = NEXT_OPTION(option, max_option);
+        if (left_blue_button && !show_runtime) {
+            left_blue_button = 0;
+            option = PREV_OPTION(option, max_option);
             print_options_to_lcd(options, option, max_option);
         }
         if (red_button && !show_runtime) {
@@ -110,6 +113,11 @@ int main() {
                 print_time_to_lcd();
                 print_options_to_lcd(options, option, max_option);
             }
+        }
+        if (right_blue_button && !show_runtime) {
+            right_blue_button = 0;
+            option = NEXT_OPTION(option, max_option);
+            print_options_to_lcd(options, option, max_option);
         }
         if (SYSTICKS_PASSED(runtime_ping, 2000) && show_runtime) {
             print_runtime_to_lcd('c');

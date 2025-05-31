@@ -10,6 +10,7 @@
 extern volatile uint32_t systicks;
 uint32_t time_format;
 
+#define PREV_OPTION(option, max_option) (option == 0 ? max_option : option - 1)
 #define NEXT_OPTION(option, max_option) (option == max_option ? 0 : option + 1)
 
 /* 

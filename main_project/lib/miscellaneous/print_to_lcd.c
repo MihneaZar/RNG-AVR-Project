@@ -176,8 +176,29 @@ void Set_time() {
     SSD1306_UpdateScreen(SSD1306_ADDR);
 
     while (digit_position < 8) {
-        if (blue_button) {
-            blue_button = 0;
+        if (left_blue_button) {
+            left_blue_button = 0;
+            if (digit_position != 0) {
+                position_string[digit_position] = ' ';
+                digit_position--;
+                if (time_string[digit_position] == ':') {
+                    digit_position--;
+                }
+                position_string[digit_position] = '^';
+                SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
+                SSD1306_DrawString(position_string);
+                SSD1306_UpdateScreen(SSD1306_ADDR);
+            }
+        }
+        if (red_button) {
+            red_button = 0;
+            next_time_digit(time_string, digit_position);
+            SSD1306_SetPosition(CHAR_PIXELS * 5, 1);
+            SSD1306_DrawString(time_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        if (right_blue_button) {
+            right_blue_button = 0;
             position_string[digit_position] = ' ';
             digit_position++;
             if (time_string[digit_position] == ':') {
@@ -186,13 +207,6 @@ void Set_time() {
             position_string[digit_position] = '^';
             SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
             SSD1306_DrawString(position_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
-        }
-        if (red_button) {
-            red_button = 0;
-            next_time_digit(time_string, digit_position);
-            SSD1306_SetPosition(CHAR_PIXELS * 5, 1);
-            SSD1306_DrawString(time_string);
             SSD1306_UpdateScreen(SSD1306_ADDR);
         }
     }
@@ -217,14 +231,16 @@ uint32_t get_value(char show_text[]) {
     SSD1306_UpdateScreen(SSD1306_ADDR);
 
     while (digit_position < 6) {
-        if (blue_button) {
-            blue_button = 0;
-            position_string[digit_position] = ' ';
-            digit_position++;
-            position_string[digit_position] = '^';
-            SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
-            SSD1306_DrawString(position_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
+        if (left_blue_button) {
+            left_blue_button = 0;
+            if (digit_position != 0) {
+                position_string[digit_position] = ' ';
+                digit_position--;
+                position_string[digit_position] = '^';
+                SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+                SSD1306_DrawString(position_string);
+                SSD1306_UpdateScreen(SSD1306_ADDR);
+            }
         }
         if (red_button) {
             red_button = 0;
@@ -235,6 +251,15 @@ uint32_t get_value(char show_text[]) {
             }
             SSD1306_SetPosition(CHAR_PIXELS * 6, 1);
             SSD1306_DrawString(value_string);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        if (right_blue_button) {
+            right_blue_button = 0;
+            position_string[digit_position] = ' ';
+            digit_position++;
+            position_string[digit_position] = '^';
+            SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+            SSD1306_DrawString(position_string);
             SSD1306_UpdateScreen(SSD1306_ADDR);
         }
     }
