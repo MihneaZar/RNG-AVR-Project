@@ -3,11 +3,11 @@
 // #include <stdio.h>
 
 // #include "usart.h"
+#include "menus.h"
 #include "timer.h"
 #include "ssd1306.h"
 #include "buttons.h"
 // #include "pff.h"
-#include "print_to_lcd.h"
 
 // FATFS fs;  // sistemul de fisiere
 
@@ -50,92 +50,13 @@ void init_all() {
     Set_time();
 }
 
-uint32_t random(uint32_t min_rand, uint32_t max_rand) {
-    uint32_t interval = max_rand - min_rand + 1;
-    uint32_t sys_in_interv = systicks % interval;
-    // printf("%ld\n%ld\n%ld\n%ld\n\n", sys_in_interv, left_blue_count() % interval, red_count() % interval, right_blue_count() % interval);
-    return min_rand + (red_count() % interval * sys_in_interv + (left_blue_count() % interval) * (right_blue_count() % interval)) % interval;
-}
-
 int main() { 
     init_all();
 
     DDRB |= (1 << PB5);
     PORTB &= ~(1 << PB5);
 
-    uint32_t runtime_ping = -2001;
-    uint32_t time_ping = -1001;
-    uint8_t show_runtime = 0;
+    main_menu();
 
-    char options[LCD_LINES][LCD_LINE_LEN] = {"time   ", "runtime", "rand  ", "set rand"};
-    uint8_t option = 0;
-    uint8_t max_option = 3;
-    print_options_to_lcd(options, option, max_option);
-
-    uint32_t min_rand = 0;
-    uint32_t max_rand = 255;
-
-    while(1) {
-        if (left_blue_button && !show_runtime) {
-            left_blue_button = 0;
-            option = PREV_OPTION(option, max_option);
-            print_options_to_lcd(options, option, max_option);
-        }
-        if (red_button && !show_runtime) {
-            red_button = 0;
-
-            // change time format
-            if (option == 0) {
-                if (time_format == 24) {
-                    time_format = 12;
-                } else {
-                    time_format = 24;
-                }  
-                print_time_to_lcd();
-            }
-
-            // show runtime
-            if (option == 1) {
-                print_runtime_to_lcd('p');
-                runtime_ping = systicks;
-                show_runtime = 1;
-            }
-
-            // print on the screen a random value
-            if (option == 2) {
-                print_rand_to_lcd(random(min_rand, max_rand));
-            }
-
-            // set minimum and maximum random value
-            if (option == 3) {
-                min_rand = get_value(" Set min rand val:");
-                max_rand = get_value(" Set max rand val:");
-                print_time_to_lcd();
-                print_options_to_lcd(options, option, max_option);
-            }
-        }
-        if (right_blue_button && !show_runtime) {
-            right_blue_button = 0;
-            option = NEXT_OPTION(option, max_option);
-            print_options_to_lcd(options, option, max_option);
-        }
-        if (SYSTICKS_PASSED(runtime_ping, 2000) && show_runtime) {
-            print_runtime_to_lcd('c');
-            show_runtime = 0;
-            print_options_to_lcd(options, option, max_option);
-        }
-        if (SYSTICKS_PASSED(time_ping, 1000)) {
-            if (!SYSTICKS_PASSED(runtime_ping, 2000)) {
-                print_runtime_to_lcd('u');
-            }
-            print_time_to_lcd();
-            time_ping = systicks;
-            if (PORTB & (1 << PB5)) {
-                PORTB &= ~(1 << PB5);
-            } else {
-                PORTB |= (1 << PB5);
-            }
-        }
-    }
     return 0;
 }

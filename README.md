@@ -10,7 +10,7 @@ Functions:
   - spi, twi - for communication between ATmega and modules;
   - timer, button_interrupt - timer and buttons;
   - ssd1306, sd_reader: lcd and microsd module.
-  - miscellaneous: printing functions to lcd. 
+  - lcd_printing: printing functions to lcd. 
 
 </br>
 <p align="center">

@@ -11,7 +11,8 @@
         "stdio.h": "c",
         "spi.h": "c",
         "i2c.h": "c",
-        "print_to_lcd.h": "c"
+        "print_to_lcd.h": "c",
+        "menus.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

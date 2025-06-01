@@ -1,6 +1,8 @@
 #ifndef TIMERS_H_
 #define TIMERS_H_
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
 #include <inttypes.h>
 
 /* 
@@ -8,10 +10,10 @@
  * for use within other .c modules.
  */
 extern volatile uint32_t systicks;
-uint32_t time_format;
+extern volatile uint16_t milis;
 
-#define PREV_OPTION(option, max_option) (option == 0 ? max_option : option - 1)
-#define NEXT_OPTION(option, max_option) (option == max_option ? 0 : option + 1)
+#define PREV_OPTION(option, no_of_options) (option == 0 ? (no_of_options - 1) : (option - 1))
+#define NEXT_OPTION(option, no_of_options) (option == (no_of_options - 1) ? 0 : (option + 1))
 
 /* 
  * Useful macro to check whether a specific amount of time

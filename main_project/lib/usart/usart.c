@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <avr/io.h>
-
 #include "usart.h"
 
 /*

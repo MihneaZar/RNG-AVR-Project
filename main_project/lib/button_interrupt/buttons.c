@@ -1,8 +1,4 @@
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <buttons.h>
-
-#include "timer.h"
+#include "buttons.h"
 
 volatile uint8_t left_blue_button = 0; 
 volatile uint8_t red_button = 0;
@@ -51,6 +47,7 @@ ISR(PCINT2_vect) {
 
     // interrupt on PCINT19 (inverse logic)
     if (!(PIND & (1 << PD3)) && SYSTICKS_PASSED(last_red, 200)) {
+        milis = systicks % 1000;
         last_last_red = last_red;
         last_red = systicks;
         red_button = 1;

@@ -1,28 +1,17 @@
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <timer.h>
+#include "timer.h"
 
 /* Allocates the system ticks counter (milliseconds since boot). */
 volatile uint32_t systicks = 0;
+volatile uint16_t milis = 0;
 uint32_t start_time = 0;
-uint32_t time_format = 24;
 
 /* Clock correction */
 #define CLOCK_SKEW 86400
 uint32_t last_correction = 0;
 
 void time_to_string(char* time_string) {
-    char twelve_hour;
     uint32_t current_time = systicks / 1000 + start_time; 
     uint8_t hours = current_time / 3600 % 24;
-    if (time_format == 12) {
-        if (hours < 12) {
-            twelve_hour = 'A';
-        } else {
-            twelve_hour = 'P';
-            hours = hours - 12;
-        }
-    }
     uint8_t minutes = current_time % 3600 / 60;
     uint8_t seconds = current_time % 60;
     time_string[0] = (char) ('0' + hours / 10);
@@ -33,17 +22,10 @@ void time_to_string(char* time_string) {
     time_string[5] = ':';
     time_string[6] = (char) ('0' + seconds / 10);
     time_string[7] = (char) ('0' + seconds % 10);
-    if (time_format == 12) {
-        time_string[8] = ' ';
-        time_string[9] = twelve_hour;
-        time_string[10] = 'M';
-        time_string[11] = '\0';
-    } else {
-        time_string[8] = ' ';
-        time_string[9] = ' ';
-        time_string[10] = ' ';
-        time_string[11] = '\0';
-    }
+    time_string[8] = ' ';
+    time_string[9] = ' ';
+    time_string[10] = ' ';
+    time_string[11] = '\0';
 }
 
 void set_start_time(char time_string[9]) {
@@ -104,7 +86,7 @@ void Timer2_init_systicks(void) {
 ISR(TIMER2_COMPA_vect) {
     if (SYSTICKS_PASSED(last_correction, CLOCK_SKEW)) {
         last_correction = systicks;
-    } else {   
+    } else { 
         systicks++;
     }
 }

@@ -1,6 +1,7 @@
 #ifndef USART_H_
 #define USART_H_
 
+#include <avr/io.h>
 #include <stdio.h>
 
 #define F_CPU 16000000L

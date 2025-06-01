@@ -1,6 +1,11 @@
 #ifndef BUTTONS_H_
 #define BUTTONS_H_
 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+#include "timer.h"
+
 extern volatile uint8_t left_blue_button; 
 extern volatile uint8_t red_button; 
 extern volatile uint8_t right_blue_button; 

@@ -1,6 +1,4 @@
 #include "print_to_lcd.h"
-#include "timer.h"
-#include "buttons.h"
 
 void clear_lcd_line(int line) {
     char clear[LCD_LINE_LEN + 1];
@@ -21,10 +19,26 @@ void print_time_to_lcd() {
     SSD1306_UpdateScreen(SSD1306_ADDR);
 }
 
-void print_options_to_lcd(char options[4][18], int option, int max_option) {
+void print_options_to_lcd(char *options[], uint8_t option, uint8_t no_of_options) {
     char print_options[50];
-    int position = 0;
-    for (int i = 0; i <= max_option; i++) {
+    uint8_t position = 0;
+    uint8_t options0_len = 0;
+    uint8_t options1_len = 0;
+    uint8_t options2_len = 0;
+    uint8_t options3_len = 0;
+    char *count_len = options[1];
+    while (*count_len) {
+        options1_len++;
+        count_len++;
+    }
+    if (no_of_options == 4) {
+        count_len = options[3];
+        while (*count_len) {
+            options3_len++;
+            count_len++;
+        }
+    }
+    for (int i = 0; i < no_of_options; i++) {
         if (i == option) {
             print_options[position++] = '>';
         } else {
@@ -32,29 +46,30 @@ void print_options_to_lcd(char options[4][18], int option, int max_option) {
         }
         int option_pos = 0;
         while(options[i][option_pos]) {
+            if (i == 0) {
+                options0_len++;
+            }
+            if (i == 2) {
+                options2_len++;
+            }
             print_options[position++] = options[i][option_pos++];
         }
-        print_options[position++] = ' ';
+        if (i == 0) {
+            for (int spaces = 0; spaces < LCD_LINE_LEN - options0_len - options1_len - 2; spaces++) {
+                print_options[position++] = ' ';
+            }
+        } 
+        if (i == 2) {
+            for (int spaces = 0; spaces < LCD_LINE_LEN - options2_len - options3_len - 2; spaces++) {
+                print_options[position++] = ' ';
+            }
+        }
     }
     print_options[position] = '\0';
+    printf("%s\n\n", print_options);
     SSD1306_SetPosition(0, 2);
     SSD1306_DrawString(print_options);
     SSD1306_UpdateScreen(SSD1306_ADDR);
-}
-
-void value_to_string(char *string, int value, char append) {
-    int power_of_ten = 1;
-    while (value / power_of_ten >= 10) {
-        power_of_ten *= 10;
-    }
-    int position = 0;
-    while(power_of_ten > 0) {
-        string[position++] = value % (power_of_ten * 10) / power_of_ten + '0';
-        power_of_ten /= 10;
-    }
-    string[position++] = append;
-    string[position] = '\0'; 
-    // copy_string_values(append, string + position);
 }
 
 void runtime_to_string(char *string) {
@@ -106,8 +121,8 @@ void runtime_to_string(char *string) {
 
 /***
  * p = print runtime
- * u = update
  * c = clear runtime
+ * u = update runtime (only value)
  * 
  */
 void print_runtime_to_lcd(char command) {
@@ -115,10 +130,13 @@ void print_runtime_to_lcd(char command) {
         clear_lcd_line(2);
         clear_lcd_line(3);
     }
-    if (command == 'p' || command == 'u') {
-        char print_runtime[18] = "Current runtime: ";
+    if (command == 'p') {
+        char print_runtime[LCD_LINE_LEN] = "Current runtime: ";
         SSD1306_SetPosition(0, 1);
         SSD1306_DrawString(print_runtime);
+    }
+    if (command == 'p' || command == 'u') {
+        char print_runtime[LCD_LINE_LEN];   
         runtime_to_string(print_runtime);
         SSD1306_SetPosition(0, 2);
         SSD1306_DrawString(print_runtime);
