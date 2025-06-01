@@ -20,9 +20,6 @@ void Buttons_init() {
 
     // interrupt on pins PCINT18 and PCINT19
     PCMSK2 |= (1 << PCINT20) | (1 << PCINT19) | (1 << PCINT18);
-
-    // any edge generates interrupt
-    EICRA |= (1 << ISC00);
 }
 
 uint32_t left_blue_count() {

@@ -5,6 +5,9 @@
  * 
  */
 uint32_t random(uint32_t min_rand, uint32_t max_rand) {
+    if (min_rand > max_rand) {
+        return 0;
+    }
     uint32_t interval = max_rand - min_rand + 1;
     uint32_t sys_in_interv = systicks % interval;
     // printf("%ld\n%ld\n%ld\n%ld\n\n", sys_in_interv, left_blue_count() % interval, red_count() % interval, right_blue_count() % interval);
@@ -35,7 +38,6 @@ uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
         }
         if (red_button) {
             red_button = 0;
-
             return option;
         }
         if (right_blue_button) {
@@ -60,7 +62,7 @@ uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
  * 
  */
 void main_menu() {
-    char *options[] = {"time", "runtime", "rand", "set rand"};
+    char *options[] = {"games", "runtime", "rand", "set rand"};
     uint8_t option = 0;
     uint8_t no_of_options = 4;
 
@@ -72,7 +74,7 @@ void main_menu() {
 
         // games or no games
         if (option == 0) {
-
+            game_menu();
         }
 
         // show runtime
@@ -109,3 +111,31 @@ void main_menu() {
     }
 }
 
+/***
+ * The function for the game select menu.
+ * 
+ */
+void game_menu() {
+    char *options[] = {"rps", "xo", "blackjack", "return"};
+    uint8_t option = 0;
+    uint8_t no_of_options = 4;
+
+    while(1) {
+        option = menu_interface(options, option, no_of_options);
+        if (option == 0) {
+
+        }
+        
+        if (option == 1) {
+
+        }
+        
+        if (option == 2) {
+
+        }
+        
+        if (option == 3) {
+            return;
+        }
+    }
+}

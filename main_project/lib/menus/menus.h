@@ -10,5 +10,6 @@
 uint32_t random(uint32_t min_rand, uint32_t max_rand);
 uint8_t menu_interface(char *options[], uint8_t option, uint8_t max_option);
 void main_menu();
+void game_menu();
 
 #endif // PRINT_TO_LCD_H
