@@ -66,7 +66,6 @@ void print_options_to_lcd(char *options[], uint8_t option, uint8_t no_of_options
         }
     }
     print_options[position] = '\0';
-    printf("%s\n\n", print_options);
     SSD1306_SetPosition(0, 2);
     SSD1306_DrawString(print_options);
     SSD1306_UpdateScreen(SSD1306_ADDR);
@@ -176,6 +175,29 @@ void print_rand_to_lcd(uint32_t rand) {
     rand_line[position] = '\0';
     SSD1306_SetPosition(0, 1);
     SSD1306_DrawString(rand_line);
+}
+
+void print_line_to_lcd(uint8_t line, char text_line[]) {
+    clear_lcd_line(1);
+
+    uint8_t text_len = 0;
+    char *text_pos = text_line;
+    while(*text_pos != '\0') {
+        text_len++;
+        text_pos++;
+    }
+    char print_text[LCD_LINE_LEN + 1];
+    uint8_t position = 0;
+    while (position < (LCD_LINE_LEN - text_len) / 2) {
+        print_text[position++] = ' ';
+    }
+    text_pos = text_line;
+    do {
+        print_text[position++] = *(text_pos++);
+    } while(*text_pos != '\0');
+
+    SSD1306_SetPosition(0, line);
+    SSD1306_DrawString(print_text);
     SSD1306_UpdateScreen(SSD1306_ADDR);
 }
 

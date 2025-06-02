@@ -34,6 +34,12 @@ uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
         if (left_blue_button) {
             left_blue_button = 0;
             option = PREV_OPTION(option, no_of_options);
+            
+            // check if option is blank string, 
+            // skip to previous one if it is
+            if (options[option][0] == '\0') { 
+                option = PREV_OPTION(option, no_of_options);
+            }
             print_options_to_lcd(options, option, no_of_options);
         }
         if (red_button) {
@@ -43,6 +49,11 @@ uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
         if (right_blue_button) {
             right_blue_button = 0;
             option = NEXT_OPTION(option, no_of_options);
+            // check if option is blank string, 
+            // skip to next one if it is
+            if (options[option][0] == '\0') { 
+                option = NEXT_OPTION(option, no_of_options);
+            }
             print_options_to_lcd(options, option, no_of_options);
         }
         if (SYSTICKS_PASSED(time_ping, 1000)) {
@@ -62,18 +73,20 @@ uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
  * 
  */
 void main_menu() {
+    clear_lcd_line(1);
+    
     char *options[] = {"games", "runtime", "rand", "set rand"};
     uint8_t option = 0;
-    uint8_t no_of_options = 4;
 
     uint32_t min_rand = 0;
     uint32_t max_rand = 255;
 
     while(1) {
-        option = menu_interface(options, option, no_of_options);
+        option = menu_interface(options, option, FOUR_OPTIONS);
 
         // games or no games
         if (option == 0) {
+            clear_lcd_line(1);
             game_menu();
         }
 
@@ -106,7 +119,7 @@ void main_menu() {
             min_rand = get_value(" Set min rand val:");
             max_rand = get_value(" Set max rand val:");
             print_time_to_lcd();
-            print_options_to_lcd(options, option, no_of_options);
+            print_options_to_lcd(options, option, FOUR_OPTIONS);
         }
     }
 }
@@ -116,26 +129,35 @@ void main_menu() {
  * 
  */
 void game_menu() {
-    char *options[] = {"rps", "xo", "blackjack", "return"};
-    uint8_t option = 0;
-    uint8_t no_of_options = 4;
+    char *game_options[] = {"rps", "xo", "blackjack", "return"};
+    char game_text[] = "Choose a game:";
+    uint8_t game_option = 0;
+
+    char *versus_options[] = {"bot", "pvp", "", "return"};
+    char versus_text[] = "Choose gamemode:";
+    uint8_t versus_option = 0;
+
+    char versus_modes[] = {'b', 'p'};
 
     while(1) {
-        option = menu_interface(options, option, no_of_options);
-        if (option == 0) {
-
-        }
-        
-        if (option == 1) {
-
-        }
-        
-        if (option == 2) {
-
-        }
-        
-        if (option == 3) {
+        print_line_to_lcd(1, game_text);
+        game_option = menu_interface(game_options, game_option, FOUR_OPTIONS);
+        clear_lcd_line(1);
+        if (game_option == 3) {
             return;
+        }
+        print_line_to_lcd(1, versus_text);
+        versus_option = menu_interface(versus_options, versus_option, FOUR_OPTIONS);
+        clear_lcd_line(1);
+        if (versus_option == 0 || versus_option == 1) {
+            switch (game_option) {
+                case 0: rps(versus_modes[versus_option]);
+                    break;
+                case 1: xo(versus_modes[versus_option]);
+                    break;
+                case 2: blackjack(versus_modes[versus_option]);
+                    break;
+            }
         }
     }
 }
