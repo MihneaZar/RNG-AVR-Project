@@ -36,6 +36,7 @@ uint32_t right_blue_count() {
 
 // intrerupere on D
 ISR(PCINT2_vect) {
+
     // interrupt on PCINT20 (inverse logic)
     if (!(PIND & (1 << PD4)) && SYSTICKS_PASSED(last_left_blue, 200)) {
         last_left_blue = systicks;
@@ -44,7 +45,6 @@ ISR(PCINT2_vect) {
 
     // interrupt on PCINT19 (inverse logic)
     if (!(PIND & (1 << PD3)) && SYSTICKS_PASSED(last_red, 200)) {
-        milis = systicks % 1000;
         last_last_red = last_red;
         last_red = systicks;
         red_button = 1;

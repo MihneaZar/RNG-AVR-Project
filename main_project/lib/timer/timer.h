@@ -10,7 +10,6 @@
  * for use within other .c modules.
  */
 extern volatile uint32_t systicks;
-extern volatile uint16_t milis;
 
 #define PREV_OPTION(option, no_of_options) (option == 0 ? (no_of_options - 1) : (option - 1))
 #define NEXT_OPTION(option, no_of_options) (option == (no_of_options - 1) ? 0 : (option + 1))
@@ -24,7 +23,6 @@ extern volatile uint16_t milis;
 
 void time_to_string(char* time_string);
 void set_start_time(char time_string[9]);
-void Set_time();
 void next_time_digit(char *time_string, int digit_position);
 void Timer2_init_systicks(void);
 

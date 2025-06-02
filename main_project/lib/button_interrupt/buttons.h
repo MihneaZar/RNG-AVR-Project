@@ -6,6 +6,7 @@
 
 #include "timer.h"
 
+extern volatile uint32_t sleep_ping;
 extern volatile uint8_t left_blue_button; 
 extern volatile uint8_t red_button; 
 extern volatile uint8_t right_blue_button; 

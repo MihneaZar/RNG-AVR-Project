@@ -1,5 +1,22 @@
 #include "print_to_lcd.h"
 
+void append_chars(char *main_char, char *add_char) {
+    while (*main_char != '\0') {
+        main_char++;
+    }
+    while (*add_char != '\0') {
+        *main_char = *add_char;
+        main_char++;
+        add_char++;
+    }
+    *main_char = '\0';
+}
+
+void clear_lcd_screen() {
+    SSD1306_ClearScreen();
+    SSD1306_UpdateScreen(SSD1306_ADDR);
+}
+
 void clear_lcd_line(int line) {
     char clear[LCD_LINE_LEN + 1];
     for (int i = 0; i < LCD_LINE_LEN; i++) {
@@ -8,14 +25,6 @@ void clear_lcd_line(int line) {
     clear[LCD_LINE_LEN] = '\0';
     SSD1306_SetPosition(0, line);
     SSD1306_DrawString(clear);
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-}
-
-void print_time_to_lcd() {
-    char time_string[12];
-    time_to_string(time_string);
-    SSD1306_SetPosition(CHAR_PIXELS * 5, 0);
-    SSD1306_DrawString(time_string);
     SSD1306_UpdateScreen(SSD1306_ADDR);
 }
 
@@ -128,8 +137,6 @@ void print_runtime_to_lcd(char command) {
     if (command == 'p') {
         clear_lcd_line(2);
         clear_lcd_line(3);
-    }
-    if (command == 'p') {
         char print_runtime[LCD_LINE_LEN] = "Current runtime: ";
         SSD1306_SetPosition(0, 1);
         SSD1306_DrawString(print_runtime);
@@ -148,20 +155,16 @@ void print_runtime_to_lcd(char command) {
     }
 }
 
-void print_rand_to_lcd(uint32_t rand) {
-    clear_lcd_line(1);
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-    uint32_t wait_ping = systicks;
-    while (!SYSTICKS_PASSED(wait_ping, 200));
-    char rand_line[LCD_LINE_LEN + 1] = "   Rand: ";
+void print_rand_to_lcd(uint32_t rand, uint32_t max_rand) {
+    char rand_line[LCD_LINE_LEN + 1] = "Rand: ";
     uint32_t pow10 = 100000;
     uint8_t non_zero = 0;
-    uint8_t position = 9;
-    if (rand == 0) {
-        SSD1306_SetPosition(0, 1);
-        SSD1306_DrawString("   Rand:      0");
-        return;
+    uint8_t position = 6;
+
+    while (max_rand / pow10 == 0 && pow10 >= 10) {
+        pow10 /= 10;
     }
+
     while(pow10 > 0) {
         if (non_zero || rand / pow10 > 0) {
             non_zero = 1;
@@ -172,13 +175,16 @@ void print_rand_to_lcd(uint32_t rand) {
         rand = rand % pow10;
         pow10 /= 10;
     }
+    if (!non_zero) {
+        rand_line[--position] = '0';
+        position++;
+    }
     rand_line[position] = '\0';
-    SSD1306_SetPosition(0, 1);
-    SSD1306_DrawString(rand_line);
+    print_line_to_lcd(1, rand_line);
 }
 
 void print_line_to_lcd(uint8_t line, char text_line[]) {
-    clear_lcd_line(1);
+    clear_lcd_line(line);
 
     uint8_t text_len = 0;
     char *text_pos = text_line;
@@ -192,67 +198,14 @@ void print_line_to_lcd(uint8_t line, char text_line[]) {
         print_text[position++] = ' ';
     }
     text_pos = text_line;
-    do {
+    while(*text_pos != '\0') {
         print_text[position++] = *(text_pos++);
-    } while(*text_pos != '\0');
+    }
+    print_text[position] = '\0';
 
     SSD1306_SetPosition(0, line);
     SSD1306_DrawString(print_text);
     SSD1306_UpdateScreen(SSD1306_ADDR);
-}
-
-void Set_time() {
-    SSD1306_ClearScreen();
-    uint8_t digit_position = 0;
-
-    char time_string[12];
-    char position_string[9] = "^       ";
-    systicks = 0;
-    time_to_string(time_string);
-    SSD1306_SetPosition(CHAR_PIXELS * 5, 1);
-    SSD1306_DrawString(time_string);
-    SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
-    SSD1306_DrawString(position_string);
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-
-    while (digit_position < 8) {
-        if (left_blue_button) {
-            left_blue_button = 0;
-            if (digit_position != 0) {
-                position_string[digit_position] = ' ';
-                digit_position--;
-                if (time_string[digit_position] == ':') {
-                    digit_position--;
-                }
-                position_string[digit_position] = '^';
-                SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
-                SSD1306_DrawString(position_string);
-                SSD1306_UpdateScreen(SSD1306_ADDR);
-            }
-        }
-        if (red_button) {
-            red_button = 0;
-            next_time_digit(time_string, digit_position);
-            SSD1306_SetPosition(CHAR_PIXELS * 5, 1);
-            SSD1306_DrawString(time_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
-        }
-        if (right_blue_button) {
-            right_blue_button = 0;
-            position_string[digit_position] = ' ';
-            digit_position++;
-            if (time_string[digit_position] == ':') {
-                digit_position++;
-            }
-            position_string[digit_position] = '^';
-            SSD1306_SetPosition(CHAR_PIXELS * 5, 2);
-            SSD1306_DrawString(position_string);
-            SSD1306_UpdateScreen(SSD1306_ADDR);
-        }
-    }
-    SSD1306_ClearScreen();
-    SSD1306_UpdateScreen(SSD1306_ADDR);
-    set_start_time(time_string);
 }
 
 uint32_t get_value(char show_text[]) {
@@ -280,6 +233,10 @@ uint32_t get_value(char show_text[]) {
                 SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
                 SSD1306_DrawString(position_string);
                 SSD1306_UpdateScreen(SSD1306_ADDR);
+            } else {
+                SSD1306_ClearScreen();
+                SSD1306_UpdateScreen(SSD1306_ADDR);
+                return MAX_RANDOM + 1;
             }
         }
         if (red_button) {
