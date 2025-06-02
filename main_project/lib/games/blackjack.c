@@ -1,6 +1,28 @@
 #include "blackjack.h"
 
+const uint8_t bj_values[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 10, 10, 10};
+const char *bj_names[] = {"", " A", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", " A", " J", " Q", " K"};
+
+uint8_t bj_freq[NO_OF_VALUES + 1];
+
+uint8_t bj_hit() {
+    uint8_t card_no = random(1, NO_OF_VALUES);
+    while (bj_freq[card_no] == 0) {
+        card_no = random(1, NO_OF_VALUES);
+    }
+    bj_freq[card_no]--;
+    return card_no;
+}
+
+/***
+ * Cute animation at the beginning of game, but also resets frequencies of cards back to four.
+ * 
+ */
 void shuffle_animation() {
+    for (int i = 1; i <= NO_OF_VALUES; i++) {
+        bj_freq[i] = NO_OF_CARDS;
+    }
+
     uint32_t animation_ping;
     clear_lcd_screen();
     print_line_to_lcd(0, "Shuffling cards.  ");
@@ -49,20 +71,20 @@ void blackjack_pvp() {
             break;
         }
 
-        uint8_t winner = rps_winner[player1_choice][player2_choice];
-        clear_lcd_line(2);
-        clear_lcd_line(3);
-        if (winner == 0) {
-            print_line_to_lcd(1, "It's a draw!");
-        }
-        if (winner == 1) {
-            player1_score++;
-            print_line_to_lcd(1, "Player one wins!");
-        } 
-        if (winner == 2) {
-            player2_score++;
-            print_line_to_lcd(1, "Player two wins!");
-        }
+        // uint8_t winner = rps_winner[player1_choice][player2_choice];
+        // clear_lcd_line(2);
+        // clear_lcd_line(3);
+        // if (winner == 0) {
+        //     print_line_to_lcd(1, "It's a draw!");
+        // }
+        // if (winner == 1) {
+        //     player1_score++;
+        //     print_line_to_lcd(1, "Player one wins!");
+        // } 
+        // if (winner == 2) {
+        //     player2_score++;
+        //     print_line_to_lcd(1, "Player two wins!");
+        // }
 
         wait_for_input();
     }

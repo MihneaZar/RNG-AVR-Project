@@ -1,7 +1,6 @@
 #include "rps.h"
 
 // 0 - rock, 1 - paper, 2 - scissors
-
 char *choice_name[] = { "rock", "paper", "scissors" };
 
 // determines winner of rock-paper-scissors

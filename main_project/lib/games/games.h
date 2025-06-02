@@ -1,6 +1,8 @@
 #ifndef GAMES_H
 #define GAMES_H
 
+#include <stdint.h>
+
 #include "rps.h"
 #include "xo.h"
 #include "blackjack.h"

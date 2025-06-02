@@ -142,7 +142,7 @@ void print_runtime_to_lcd(char command) {
         SSD1306_DrawString(print_runtime);
     }
     if (command == 'p' || command == 'u') {
-        char print_runtime[LCD_LINE_LEN];   
+        char print_runtime[LCD_LINE_LEN + 1];   
         runtime_to_string(print_runtime);
         SSD1306_SetPosition(0, 2);
         SSD1306_DrawString(print_runtime);
