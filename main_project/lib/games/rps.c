@@ -1,22 +1,15 @@
 #include "rps.h"
+#include <stdio.h>
 
 // 0 - rock, 1 - paper, 2 - scissors
-char *choice_name[] = { "rock", "paper", "scissors" };
-
-// determines winner of rock-paper-scissors
-// first value represents player 1 (line),
-// second value represents player 2 (column)
-const uint8_t rps_winner[RPS_OPTIONS][RPS_OPTIONS] = { 
-    { 0, 2, 1 },
-    { 1, 0, 2 },
-    { 2, 1, 0 }
-};
-
-// index beats vector value
-const uint8_t beats[RPS_OPTIONS] = { 2, 0, 1 };
-
-// index is beaten by vector value
-const uint8_t is_beaten[RPS_OPTIONS] = { 1, 2, 0 };
+const char *choice_name(uint8_t choice) {
+    switch (choice) {
+        case 0: return "rock";
+        case 1: return "paper";
+        case 2: return "scissors"; 
+    }
+    return "";
+}
 
 /***
  * Calculates the bot's rock-paper-scissors choice.
@@ -45,7 +38,7 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
     // the option that beats its last choice, therefore it 
     // chooses what beats that
     if (diff == 'd') {
-        uint8_t counter_choice = beats[beats[last_bot_choice]];
+        uint8_t counter_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_bot_choice])]);
         for (int i = 0; i < THREE_OPTIONS; i++) {
             if (options[i] == counter_choice) {
                 weights[i] = 60;
@@ -66,8 +59,8 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
             return bot_turn('d', last_bot_choice, last_player_choice);
         }
         
-        uint8_t counter_bot_choice = beats[beats[last_bot_choice]];
-        uint8_t counter_player_choice = beats[beats[last_player_choice]];
+        uint8_t counter_bot_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_bot_choice])]);
+        uint8_t counter_player_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_player_choice])]);
         for (int i = 0; i < THREE_OPTIONS; i++) {
             if (options[i] == counter_bot_choice || options[i] == counter_player_choice) {
                 weights[i] = 40;
@@ -123,8 +116,8 @@ void rps_pvbot(char diff) {
         uint8_t bot_choice = bot_turn(diff, last_bot_choice, last_player_choice);
         last_player_choice = player_choice;
         last_bot_choice = bot_choice;
-        
-        append_chars(bot_text, choice_name[bot_choice]);
+
+        append_chars(bot_text, choice_name(bot_choice));
 
         clear_lcd_line(2);
         clear_lcd_line(3);
@@ -136,7 +129,7 @@ void rps_pvbot(char diff) {
             break;
         }
 
-        uint8_t winner = rps_winner[player_choice][bot_choice];
+        uint8_t winner = pgm_read_byte(&rps_winner[player_choice][bot_choice]);
         clear_lcd_line(2);
         clear_lcd_line(3);
         if (winner == 0) {

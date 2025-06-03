@@ -9,7 +9,7 @@
 #define CHAR_PIXELS 7
 #define MAX_RANDOM 999999
 
-void append_chars(char *main_char, char *add_char);
+void append_chars(char *main_char, const char *add_char);
 void clear_lcd_screen();
 void clear_lcd_line(int line);
 void runtime_to_string(char *string);

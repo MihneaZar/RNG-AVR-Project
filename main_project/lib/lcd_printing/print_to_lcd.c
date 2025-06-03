@@ -1,6 +1,6 @@
 #include "print_to_lcd.h"
 
-void append_chars(char *main_char, char *add_char) {
+void append_chars(char *main_char, const char *add_char) {
     while (*main_char != '\0') {
         main_char++;
     }

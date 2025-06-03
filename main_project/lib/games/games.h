@@ -2,6 +2,7 @@
 #define GAMES_H
 
 #include <stdint.h>
+#include <avr/pgmspace.h>
 
 #include "rps.h"
 #include "xo.h"

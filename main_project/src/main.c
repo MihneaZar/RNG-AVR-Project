@@ -14,15 +14,6 @@
 /* No. of seconds before going into standby mode */
 #define STANDBY 60
 
-void copy_string_values(volatile char *string, char *copy_string) {
-    uint8_t i = 0;
-    while (string[i]) {
-        copy_string[i] = string[i];
-        i++;
-    }
-    string[i] = '\0';
-}
-
 /***
  * Disables all pull-ups for pins for power-saving.
  * 
@@ -45,7 +36,6 @@ void init_all() {
     SSD1306_ClearScreen();
     SSD1306_UpdateScreen(SSD1306_ADDR);
     Timer2_init_systicks();
-    // while (!SYSTICKS_PASSED(0, 2000));
     Buttons_init();
 }
 

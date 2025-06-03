@@ -160,6 +160,7 @@ void game_menu() {
         }
         print_line_to_lcd(0, game_titles[game_option]);
         print_line_to_lcd(1, versus_text);
+        versus_option = 0;
         versus_option = menu_interface(versus_options, versus_option, FOUR_OPTIONS);
         clear_lcd_line(1);
         if (versus_option == 0 || versus_option == 1) {

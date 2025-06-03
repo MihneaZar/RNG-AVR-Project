@@ -1,4 +1,5 @@
 #include "games.h"
+#include <stdio.h>
 
 /***
  * Choosing move of bot based on weighted probabilities
@@ -58,6 +59,9 @@ void print_score(uint8_t line, char player_name[], uint8_t score) {
 }
 
 void wait_for_input() {
+    left_blue_button = 0;
+    red_button = 0;
+    right_blue_button = 0;
     while (!left_blue_button && !red_button && !right_blue_button);
     left_blue_button = 0;
     red_button = 0;
