@@ -1,0 +1,35 @@
+program w/o menu (but with lcd): 51.3% (1051 bytes)
+
+full program @ start: 82.5% (1689 bytes)
+
+program w/o game_menu: 58.0% (1187 bytes)
+
+program w/ main_menu, no menu_interface, no game_menu: 51.9% (1063 bytes)
+
+program w/ main_menu, no menu_interface, game_menu: 76.6% (1569 bytes)
+
+program w/ main_menu, no menu_interface, game_menu no games: 57.9% (1185 bytes)
+
+
+
+program w/o games: 63.7% (1305 bytes)
+
+program w/ rps: 76.4% (1565 bytes)
+^
+| difference of 6.6% (136 bytes) !!!
+v
+program w/ blackjack: 69.8% (1429 bytes)
+
+
+
+
+rps w/o pvbot or pvp: 66.2% (1355 bytes)
+
+rps w/ pvbot: 72.5% (1485 bytes)
+
+rps w/ pvp: 72.3% (1481 bytes)
+
+
+
+
+!!! Every use of global variable -> ram goes up (eliminate global variables!!)

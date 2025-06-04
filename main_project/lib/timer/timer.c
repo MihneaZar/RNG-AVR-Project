@@ -2,7 +2,6 @@
 
 /* Allocates the system ticks counter (milliseconds since boot). */
 volatile uint32_t systicks = 0;
-uint32_t start_time = 0;
 
 /* Clock correction */
 #define CLOCK_SKEW 86400

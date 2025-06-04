@@ -165,10 +165,12 @@ void game_menu() {
         clear_lcd_line(1);
         if (versus_option == 0 || versus_option == 1) {
             switch (game_option) {
-                case 0: rps(versus_modes[versus_option]);
-                    break;
+                // case 0: rps(versus_modes[versus_option]);
+                //     break;
+
                 case 1: xo(versus_modes[versus_option]);
                     break;
+
                 case 2: blackjack(versus_modes[versus_option]);
                     break;
             }

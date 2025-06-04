@@ -1,14 +1,42 @@
 #include "rps.h"
 #include <stdio.h>
 
-// 0 - rock, 1 - paper, 2 - scissors
 const char *choice_name(uint8_t choice) {
     switch (choice) {
-        case 0: return "rock";
-        case 1: return "paper";
-        case 2: return "scissors"; 
+        case ROCK: return "rock";
+        case PAPER: return "paper";
+        case SCISSORS: return "scissors"; 
     }
     return "";
+}
+
+/*** 
+ * Returns what is beaten by given choice.
+ * 
+*/
+uint8_t is_beaten_by(uint8_t choice) {
+    switch (choice) {
+        case ROCK: return PAPER;
+        case PAPER: return SCISSORS;
+        case SCISSORS: return ROCK;
+    }
+    return 255; // should never get here
+}
+
+/*** 
+ * Returns the winner of rock-paper-scissors.
+ * (0 = draw, 1 = player1, 2 = player2)
+ *
+*/
+uint8_t rps_winner(uint8_t choice1, uint8_t choice2) {
+    if (choice1 == choice2) { 
+        return 0;
+    }
+    if (is_beaten_by(choice2) == choice1) {
+        return 1;
+    } else {
+        return 2;
+    }
 }
 
 /***
@@ -38,7 +66,7 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
     // the option that beats its last choice, therefore it 
     // chooses what beats that
     if (diff == 'd') {
-        uint8_t counter_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_bot_choice])]);
+        uint8_t counter_choice = is_beaten_by(last_bot_choice);
         for (int i = 0; i < THREE_OPTIONS; i++) {
             if (options[i] == counter_choice) {
                 weights[i] = 60;
@@ -52,6 +80,7 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
     // both what beats the player's last choice, and what beats
     // the bot's last choice (which can beat one another)
     if (diff == 'a') {
+        
         // if both the player and the bot have chosen 
         // the same thing last time, it treats it as 
         // defensive (60, 20, 20)
@@ -59,8 +88,8 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
             return bot_turn('d', last_bot_choice, last_player_choice);
         }
         
-        uint8_t counter_bot_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_bot_choice])]);
-        uint8_t counter_player_choice = pgm_read_byte(&beats[pgm_read_byte(&beats[last_player_choice])]);
+        uint8_t counter_bot_choice = is_beaten_by(last_bot_choice);
+        uint8_t counter_player_choice = is_beaten_by(last_player_choice);
         for (int i = 0; i < THREE_OPTIONS; i++) {
             if (options[i] == counter_bot_choice || options[i] == counter_player_choice) {
                 weights[i] = 40;
@@ -129,7 +158,8 @@ void rps_pvbot(char diff) {
             break;
         }
 
-        uint8_t winner = pgm_read_byte(&rps_winner[player_choice][bot_choice]);
+        uint8_t winner = rps_winner(player_choice, bot_choice);
+        // uint8_t winner = 0;
         clear_lcd_line(2);
         clear_lcd_line(3);
         if (winner == 0) {
@@ -192,7 +222,7 @@ void rps_pvp() {
             break;
         }
 
-        uint8_t winner = rps_winner[player1_choice][player2_choice];
+        uint8_t winner = rps_winner(player1_choice, player2_choice);
         clear_lcd_line(2);
         clear_lcd_line(3);
         if (winner == 0) {
