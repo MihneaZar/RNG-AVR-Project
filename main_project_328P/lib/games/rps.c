@@ -49,7 +49,6 @@ uint8_t rps_winner(uint8_t choice1, uint8_t choice2) {
  *  
  */
 uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice) {
-
     // orders the three options randomly
     uint8_t options[THREE_OPTIONS] = {0, 0, 0};
 
@@ -98,6 +97,7 @@ uint8_t bot_turn(char diff, uint8_t last_bot_choice, uint8_t last_player_choice)
             }
         }
     }
+
     return bot_chooses(options, weights, THREE_OPTIONS);
 }
 

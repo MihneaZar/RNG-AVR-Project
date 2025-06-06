@@ -589,31 +589,9 @@ void blackjack(char mode) {
                 break;
             }
 
-            char player_sum_line[LCD_LINE_LEN + 1] = "Player: ";
-            char bot_sum_line[LCD_LINE_LEN + 1] =    "Bot: ";
-
-            char player_char_sum[] = "00"; 
-            char bot_char_sum[] = "00";
-
-            if (player_sum >= 10) {
-                player_char_sum[0] = '0' + player_sum / 10;
-            } else {
-                player_char_sum[0] = ' ';
-            }
-            player_char_sum[1] = '0' + player_sum % 10;
-            append_chars(player_sum_line, player_char_sum);
-
-            if (bot_sum >= 10) {
-                bot_char_sum[0] = '0' + bot_sum / 10;
-            } else {
-                bot_char_sum[0] = ' ';
-            }
-            bot_char_sum[1] = '0' + bot_sum % 10;
-            append_chars(bot_sum_line, bot_char_sum);
-
             print_line_to_lcd(0, "Blackjack");
-            print_line_to_lcd(2, player_sum_line);
-            print_line_to_lcd(3, bot_sum_line);
+            print_score(2, "Player sum", player_sum);
+            print_score(3, "   Bot sum", bot_sum);
             
             if (result == 0) {
                 print_line_to_lcd(1, "You tied with the bot!");

@@ -236,6 +236,19 @@
    *
    * @return  uint8_t
    */
+  
   uint8_t SSD1306_DrawLine (uint8_t, uint8_t, uint8_t, uint8_t);
+  
+  /**
+   * @brief   Draw rectangle
+   *  
+   * @param   uint8_t
+   * @param   uint8_t
+   * @param   uint8_t
+   * @param   uint8_t
+   *
+   * @return  uint8_t
+   */
+  uint8_t SSD1306_DrawRectangle (uint8_t, uint8_t, uint8_t, uint8_t);
 
 #endif

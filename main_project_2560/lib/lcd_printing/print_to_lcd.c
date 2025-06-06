@@ -12,6 +12,11 @@ void append_chars(char *main_char, const char *add_char) {
     *main_char = '\0';
 }
 
+void print_lcd_boxes() {
+    SSD1306_DrawRectangle(0, 127, 0, 7);
+    SSD1306_DrawRectangle(0, 127, 8, 63);
+}
+
 void clear_lcd_screen() {
     SSD1306_ClearScreen();
     SSD1306_UpdateScreen(SSD1306_ADDR);

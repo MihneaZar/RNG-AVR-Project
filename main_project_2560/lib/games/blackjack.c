@@ -324,7 +324,7 @@ void print_player_action(const char player[], uint8_t hit_or_stand) {
  *                 1 = stands 
  * 
  */
-uint8_t bot_turn(char diff, uint8_t bot_sum, uint8_t bj_freq[], uint8_t player_stands, uint8_t sum_diff) {
+uint8_t bj_bot_turn(char diff, uint8_t bot_sum, uint8_t bj_freq[], uint8_t player_stands, uint8_t sum_diff) {
     if (diff == 'r') {
         return random(0, 1);
     }
@@ -459,7 +459,7 @@ uint8_t blackjack_pvbot(char diff, uint8_t *player_sum, uint8_t *bot_sum) {
             return player_choice;
         }
 
-        uint8_t bot_choice = bot_turn(diff, *bot_sum, bj_freq, player_stands, *bot_sum - *player_sum);
+        uint8_t bot_choice = bj_bot_turn(diff, *bot_sum, bj_freq, player_stands, *bot_sum - *player_sum);
         
         // uint32_t wait_between_inputs = systicks;
         // while (!SYSTICKS_PASSED(wait_between_inputs, 500));

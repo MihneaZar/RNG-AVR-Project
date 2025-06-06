@@ -27,6 +27,8 @@ uint32_t random(uint32_t min_rand, uint32_t max_rand) {
  * 
  */
 uint8_t menu_interface(char *options[], uint8_t option, uint8_t no_of_options) {
+    // print_lcd_boxes();
+
     print_options_to_lcd(options, option, no_of_options);
 
     while(1) {
@@ -165,8 +167,8 @@ void game_menu() {
         clear_lcd_line(1);
         if (versus_option == 0 || versus_option == 1) {
             switch (game_option) {
-                // case 0: rps(versus_modes[versus_option]);
-                //     break;
+                case 0: rps(versus_modes[versus_option]);
+                    break;
 
                 case 1: xo(versus_modes[versus_option]);
                     break;

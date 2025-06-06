@@ -38,7 +38,7 @@ void print_score(uint8_t line, char player_name[], uint8_t score) {
     }
     score_line[position++] = ':';
     score_line[position++] = ' ';
-    uint8_t pow10 = 100;
+    uint8_t pow10 = 10;
     uint8_t non_zero = 0;
     while (pow10 > 0) {
         if (non_zero || score / pow10 > 0) {

@@ -99,8 +99,7 @@ static char cacheMemLcd[CACHE_SIZE_MEM];
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_Init (uint8_t address)
-{ 
+uint8_t SSD1306_Init (uint8_t address) { 
   const uint8_t * list = INIT_SSD1306;
   uint8_t status = INIT_STATUS;                                   // init status
   uint8_t arguments;
@@ -148,8 +147,7 @@ uint8_t SSD1306_Init (uint8_t address)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_Send_StartAndSLAW (uint8_t address)
-{
+uint8_t SSD1306_Send_StartAndSLAW (uint8_t address) {
   uint8_t status = INIT_STATUS;
 
   // TWI: start
@@ -175,8 +173,7 @@ uint8_t SSD1306_Send_StartAndSLAW (uint8_t address)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_Send_Command (uint8_t command)
-{
+uint8_t SSD1306_Send_Command (uint8_t command) {
   uint8_t status = INIT_STATUS;
 
   // send control byte
@@ -208,8 +205,7 @@ uint8_t SSD1306_Send_Command (uint8_t command)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_NormalScreen (uint8_t address)
-{
+uint8_t SSD1306_NormalScreen (uint8_t address) {
   uint8_t status = INIT_STATUS;
 
   // TWI: start & SLAW
@@ -238,8 +234,7 @@ uint8_t SSD1306_NormalScreen (uint8_t address)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_InverseScreen (uint8_t address)
-{
+uint8_t SSD1306_InverseScreen (uint8_t address) {
   uint8_t status = INIT_STATUS;
 
   // TWI: start & SLAW
@@ -268,8 +263,7 @@ uint8_t SSD1306_InverseScreen (uint8_t address)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_UpdateScreen (uint8_t address)
-{
+uint8_t SSD1306_UpdateScreen (uint8_t address) {
   uint8_t status = INIT_STATUS;
   uint16_t i = 0;
 
@@ -307,8 +301,7 @@ uint8_t SSD1306_UpdateScreen (uint8_t address)
  *
  * @return  void
  */
-void SSD1306_ClearScreen (void)
-{
+void SSD1306_ClearScreen (void) {
   memset (cacheMemLcd, 0x00, CACHE_SIZE_MEM);                     // null cache memory lcd
 }
 
@@ -320,8 +313,7 @@ void SSD1306_ClearScreen (void)
  *
  * @return  void
  */
-void SSD1306_SetPosition (uint8_t x, uint8_t y) 
-{
+void SSD1306_SetPosition (uint8_t x, uint8_t y) {
   _counter = x + (y << 7);                                        // update counter
 }
 
@@ -333,8 +325,7 @@ void SSD1306_SetPosition (uint8_t x, uint8_t y)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_UpdatePosition (void) 
-{
+uint8_t SSD1306_UpdatePosition (void)  {
   uint8_t y = _counter >> 7;                                      // y / 8
   uint8_t x = _counter - (y << 7);                                // y % 8
   uint8_t x_new = x + CHARS_COLS_LENGTH + 1;                      // x + character length + 1
@@ -357,8 +348,7 @@ uint8_t SSD1306_UpdatePosition (void)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_DrawChar (char character)
-{
+uint8_t SSD1306_DrawChar (char character) {
   uint8_t i = 0;
 
   if (SSD1306_UpdatePosition () == SSD1306_ERROR) {
@@ -379,8 +369,7 @@ uint8_t SSD1306_DrawChar (char character)
  *
  * @return  void
  */
-void SSD1306_DrawString (char *str)
-{
+void SSD1306_DrawString (char *str) {
   int i = 0;
   while (str[i] != '\0') {
     SSD1306_DrawChar (str[i++]);
@@ -395,8 +384,7 @@ void SSD1306_DrawString (char *str)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_DrawPixel (uint8_t x, uint8_t y)
-{
+uint8_t SSD1306_DrawPixel (uint8_t x, uint8_t y) {
   uint8_t page = 0;
   uint8_t pixel = 0;
   
@@ -421,8 +409,7 @@ uint8_t SSD1306_DrawPixel (uint8_t x, uint8_t y)
  *
  * @return  uint8_t
  */
-uint8_t SSD1306_DrawLine (uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2)
-{
+uint8_t SSD1306_DrawLine (uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2) {
   int16_t D;                                                      // determinant
   int16_t delta_x, delta_y;                                       // deltas
   int16_t trace_x = 1, trace_y = 1;                               // steps
@@ -470,5 +457,28 @@ uint8_t SSD1306_DrawLine (uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2)
     }
   }
 
+  return SSD1306_SUCCESS;
+}
+
+/**
+ * @brief   Draw rectangle between given positions
+ *  
+ * @param   uint8_t x start position / 0 <= cols <= MAX_X-1
+ * @param   uint8_t x end position   / 0 <= cols <= MAX_X-1
+ * @param   uint8_t y start position / 0 <= rows <= MAX_Y-1 
+ * @param   uint8_t y end position   / 0 <= rows <= MAX_Y-1
+ *
+ * @return  uint8_t
+ */
+
+uint8_t SSD1306_DrawRectangle (uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2) {
+  // top line
+  SSD1306_DrawLine(x1, x2, y1, y1);
+  // bottom line
+  SSD1306_DrawLine(x1, x2, y2, y2);
+  // left line
+  SSD1306_DrawLine(x1, x1, y1, y2);
+  // right line 
+  SSD1306_DrawLine(x2, x2, y1, y2);
   return SSD1306_SUCCESS;
 }
