@@ -146,7 +146,7 @@ void play_rps(char mode, char diff) {
 
         char *play_options[] = {"rock", "paper", "scissors", "return"};
 
-        char player1_turn_line[] = "";
+        char player1_turn_line[LCD_LINE_LEN + 1] = "";
         append_chars(player1_turn_line, player1_name);
         append_chars(player1_turn_line, ":");
         print_line_to_lcd(1, player1_turn_line);
@@ -173,7 +173,7 @@ void play_rps(char mode, char diff) {
             last_player_choice = player1_choice;
             last_bot_choice = player2_choice;
 
-            char bot_turn_line[] = "Bot: ";
+            char bot_turn_line[LCD_LINE_LEN + 1] = "Bot: ";
             append_chars(bot_turn_line, rps_choice_name(player2_choice));
 
             clear_lcd_line(2);
