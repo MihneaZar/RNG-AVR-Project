@@ -3,6 +3,7 @@
 
 #include "games.h"
 
+// player1 is X, player2 is O
 #define EMPTY 0 
 #define X 1
 #define O 2

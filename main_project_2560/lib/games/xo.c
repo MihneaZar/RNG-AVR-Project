@@ -67,6 +67,108 @@ void xo_place_char(char c, uint8_t position, uint8_t is_select, uint8_t size) {
 uint8_t xo_status(uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t last_placement) {
     uint8_t last_placed = board[last_placement];
 
+    // the difference between two positions on 
+    // first diagonal, second diagonal, vertical line and horizontal one
+    uint8_t step[] = {size + 1, size - 1, size, 1};
+
+    // for every check except vertical, the stop back condition is % size == value from vector
+    // for vertical, it's / size == 0 (must be checked manually)
+    uint8_t stop_back_condition[] = {0, size - 1, 255, 0};
+
+    // for every check except vertical, the stop forward condition is % size == value from vector
+    // for vertical, it's / size == size - 1 (must be checked manually)
+    uint8_t stop_forward_condition[] = {size - 1, 0, 255, size - 1};
+
+    // first, it finds the lowest-value position to start checking from
+    // then, it checks for a line of at least win_condition elements 
+    // of the same value as the last on placed
+    for (int i = 0; i < 4; i++) {
+        uint8_t check_position = last_placement;
+        
+        if (stop_back_condition[i] != 255) {
+            uint8_t no_of_elem = 1;
+            while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position % size == stop_back_condition[i])) {
+                check_position -= step[i];
+                no_of_elem++;
+            }
+        } else {
+            uint8_t no_of_elem = 1;
+            while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position / size == 0)) {
+                check_position -= step[i];
+                no_of_elem++;
+            }
+        }
+
+        // specific issue with 0 and size - 1 positions
+        if ((check_position == 0 && i == 1) || ((check_position == size - 1) && i == 0)) {
+            continue;
+        }
+
+        uint8_t start_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+        uint8_t start_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+
+        if (size == SIZE_4X4) {
+            start_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+            start_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+        }
+
+        // if this equals win_condition after one of the checks, last player wins
+        uint8_t in_a_row = 0;
+        if (stop_forward_condition[i] != 255) {
+            while (check_position < size * size) {
+                printf("%d ", check_position);
+                if (board[check_position] == last_placed) {
+                    in_a_row++;
+                    if (in_a_row == win_condition) {
+                        uint8_t end_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+                        uint8_t end_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+
+                        if (size == SIZE_4X4) {
+                            end_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+                            end_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+                        }
+                        SSD1306_DrawLine(start_center_x, end_center_x, start_center_y, end_center_y);
+                        SSD1306_UpdateScreen(SSD1306_ADDR);
+                        return last_placed;
+                    }
+                } else {
+                    in_a_row = 0;
+                }
+                if ((check_position % size == stop_forward_condition[i])) {
+                    break;
+                }
+                check_position += step[i];
+            }
+        } else {
+            while (check_position < size * size) {
+                printf("%d ", check_position);
+                if (board[check_position] == last_placed) {
+                    in_a_row++;
+                    if (in_a_row == win_condition) {
+                        uint8_t end_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+                        uint8_t end_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+
+                        if (size == SIZE_4X4) {
+                            end_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
+                            end_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
+                        }
+                        SSD1306_DrawLine(start_center_x, end_center_x, start_center_y, end_center_y);
+                        SSD1306_UpdateScreen(SSD1306_ADDR);
+                        return last_placed;
+                    }
+                } else {
+                    in_a_row = 0;
+                }
+                if (check_position / size == size - 1) {
+                    break;
+                }
+                check_position += step[i];
+            }
+        }
+        printf("\n");
+    }
+
+    // if no one has won, check that there are still empty positions
     for (int i = 0; i < size * size; i++) {
 
         // game continues if there's at least one empty position 
@@ -188,7 +290,8 @@ uint8_t xo_3x3_round(char mode, char diff, uint8_t round_parity) {
             } else {
                 // player2_move = xo_bot_turn();
             }
-            xo_place_char('X', player2_move, IS_NOT_SELECT, SIZE_3X3);
+            xo_board[player2_move] = O;
+            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_3X3);
             
             game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player2_move);
             if (game_status != GAME_STATUS_CONTINUE) {
@@ -196,8 +299,8 @@ uint8_t xo_3x3_round(char mode, char diff, uint8_t round_parity) {
             }
 
             player1_move = get_player_move_xo(xo_board, SIZE_3X3);
-            xo_board[player1_move] = O;
-            xo_place_char('O', player1_move, IS_NOT_SELECT, SIZE_3X3);
+            xo_board[player1_move] = X;
+            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_3X3);
             
             game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player1_move);
             if (game_status != GAME_STATUS_CONTINUE) {
@@ -331,10 +434,27 @@ void play_xo(uint8_t size_option, char mode, char diff) {
         wait_for_input();
         clear_lcd_screen();
 
-        // print_line_to_lcd(1, "")
-        
+        if (mode == 'p') {
+            if (!round_parity) {
+                print_line_to_lcd(1, player1_name);
+                print_line_to_lcd(2, " goes first!");
+            } else {
+                print_line_to_lcd(1, player2_name);
+                print_line_to_lcd(2, " goes first!");
+            }
+        } else {
+            if (!round_parity) {
+                print_line_to_lcd(1, "The player");
+                print_line_to_lcd(2, " goes first!");
+            } else {
+                print_line_to_lcd(1, "The bot");
+                print_line_to_lcd(2, "goes first!");
+            }
+        }
+
         wait_for_input();
-        clear_lcd_screen();
+        clear_lcd_line(1);
+        clear_lcd_line(2);
 
         uint8_t result = 4;
 
@@ -354,8 +474,8 @@ void play_xo(uint8_t size_option, char mode, char diff) {
             print_line_to_lcd(1, "It's a tie!");
         }
             
-        // round_parity (is true) => player1 and player2 are reversed
-        if ((result == 1 && !round_parity) || (result == 2 && round_parity)) {
+        // player1 is X
+        if (result == X) {
             if (mode == 'p') {
                 print_line_to_lcd(1, "Player one wins!");
             } else {
@@ -364,8 +484,8 @@ void play_xo(uint8_t size_option, char mode, char diff) {
             player1_score++;
         }
 
-        // round_parity (is true) => player1 and player2 are reversed
-        if ((result == 2 && !round_parity) || (result == 1 && round_parity)) {
+        // player2 is O
+        if (result == O) {
             if (mode == 'p') {
                 print_line_to_lcd(1, "Player two wins!");
             } else {
