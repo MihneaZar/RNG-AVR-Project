@@ -28,6 +28,9 @@
 #define IS_SELECT 1
 #define IS_NOT_SELECT 0
 
+#define SHOW_WINNER 1
+#define DONT_SHOW_WINNER 0
+
 void xo(char mode);
 
 #endif // XO_H
