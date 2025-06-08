@@ -30,7 +30,7 @@ uint8_t rps_is_beaten_by(uint8_t choice) {
 */
 uint8_t rps_winner(uint8_t choice1, uint8_t choice2) {
     if (choice1 == choice2) { 
-        return 0;
+        return GAME_DRAW;
     }
     if (rps_is_beaten_by(choice2) == choice1) {
         return 1;
@@ -186,7 +186,7 @@ void play_rps(char mode, char diff) {
         uint8_t winner = rps_winner(player1_choice, player2_choice);
         clear_lcd_line(2);
         clear_lcd_line(3);
-        if (winner == 0) {
+        if (winner == GAME_DRAW) {
             print_line_to_lcd(1, "It's a draw!");
         }
         

@@ -48,6 +48,37 @@ void xo_place_char(char c, uint8_t position, uint8_t is_select, uint8_t size) {
 }
 
 /***
+ * Returns the status of the game.
+ * 
+ * @param board the xo board
+ * @param size size of board
+ * @param win_condition no. of X/O's in a line to win
+ * @param last_placement position of last player's move
+ * (function needs to check only if the last placement 
+ * has changed the status of the game)
+ * 
+ * @return uint8_t status:
+ *                 - 0 = it's a draw (no player has won and all positions are covered)
+ *                 - 1 = player1 won
+ *                 - 2 = player2 won
+ *                 - 3 = game hasn't ended
+ * 
+ */
+uint8_t xo_status(uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t last_placement) {
+    uint8_t last_placed = board[last_placement];
+
+    for (int i = 0; i < size * size; i++) {
+
+        // game continues if there's at least one empty position 
+        if (board[i] == EMPTY) {
+            return GAME_STATUS_CONTINUE;
+        }
+    }
+
+    return GAME_DRAW;
+}
+
+/***
  * Interface for player to choose where to place their X or O.
  * 
  */
@@ -105,57 +136,265 @@ uint8_t get_player_move_xo(uint8_t board[], uint8_t size) {
 }
 
 /***
- * Function for a game of tic-tac-toe, containing multiple rounds.
+ * Plays a round of 3x3 tic-tac-toe, pvp or pvbot.
  * 
- * @param mode b for pvbot, p for pvp
- * @param diff type of bot algorithm
+ * @param round_parity determines who goes first:
+ *                     0 - player one / player goes first
+ *                     1 - player two / bot goes first   
+ * 
+ * @return winner or draw:
+ *         0 - draw
+ *         1 - player one / player
+ *         2 - player two / bot 
  * 
  */
-void xo_3x3_round(char mode, char diff) {
+uint8_t xo_3x3_round(char mode, char diff, uint8_t round_parity) {
     print_xo_borders(SIZE_3X3);
     uint8_t xo_board[SIZE_3X3 * SIZE_3X3] = {EMPTY, EMPTY, EMPTY,   
                                              EMPTY, EMPTY, EMPTY,   
                                              EMPTY, EMPTY, EMPTY};
 
+    uint8_t game_status = GAME_STATUS_CONTINUE;
+
+    uint8_t player1_move = 0;
+    uint8_t player2_move = 0;
+
     while (1) {
-        uint8_t player1_move = get_player_move_xo(xo_board, SIZE_3X3);
-        if (player1_move == 255) {
-            break;
+        if (round_parity == 0) {
+            player1_move = get_player_move_xo(xo_board, SIZE_3X3);
+            xo_board[player1_move] = X;
+            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_3X3);
+            
+            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player1_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
+            if (mode == 'p') {
+                player2_move = get_player_move_xo(xo_board, SIZE_3X3);
+            } else {
+                // player2_move = xo_bot_turn();
+            }
+            xo_board[player2_move] = O;
+            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_3X3);
+
+            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player2_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+        } else {
+            if (mode == 'p') {
+                player2_move = get_player_move_xo(xo_board, SIZE_3X3);
+            } else {
+                // player2_move = xo_bot_turn();
+            }
+            xo_place_char('X', player2_move, IS_NOT_SELECT, SIZE_3X3);
+            
+            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player2_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
+            player1_move = get_player_move_xo(xo_board, SIZE_3X3);
+            xo_board[player1_move] = O;
+            xo_place_char('O', player1_move, IS_NOT_SELECT, SIZE_3X3);
+            
+            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player1_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
         }
-        xo_board[player1_move] = X;
-        xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_3X3);
-        uint8_t player2_move = get_player_move_xo(xo_board, SIZE_3X3);
-        if (player2_move == 255) {
-            break;
-        }
-        xo_board[player2_move] = O;
-        xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_3X3);
     }
+    
     wait_for_input();
     clear_lcd_screen();
+
+    return game_status;
 }
 
-void xo_4x4_round(char mode, char diff, uint8_t win_condition) {
+/***
+ * Plays a round of 4x4 tic-tac-toe, pvp or pvbot.
+ * 
+ * @param win_condition number of X/O's to get in a row for win (3 or 4).
+ * 
+ * @return winner or draw:
+ *         0 - draw
+ *         1 - player one / player
+ *         2 - player two / bot 
+ * 
+ */
+uint8_t xo_4x4_round(char mode, char diff, uint8_t win_condition, uint8_t round_parity) {
     print_xo_borders(SIZE_4X4);
     uint8_t xo_board[SIZE_4X4 * SIZE_4X4] = {EMPTY, EMPTY, EMPTY, EMPTY,
                                              EMPTY, EMPTY, EMPTY, EMPTY,
                                              EMPTY, EMPTY, EMPTY, EMPTY,
                                              EMPTY, EMPTY, EMPTY, EMPTY};
 
+    uint8_t game_status = GAME_STATUS_CONTINUE;
+
+    uint8_t player1_move = 0;
+    uint8_t player2_move = 0;
+
     while (1) {
-        uint8_t player1_move = get_player_move_xo(xo_board, SIZE_4X4);
-        if (player1_move == 255) {
-            break;
+        if (round_parity == 0) {
+            player1_move = get_player_move_xo(xo_board, SIZE_4X4);
+            xo_board[player1_move] = X;
+            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_4X4);
+            
+            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player1_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
+            if (mode == 'p') {
+                player2_move = get_player_move_xo(xo_board, SIZE_4X4);
+            } else {
+                // player2_move = xo_bot_turn();
+            }
+            xo_board[player2_move] = O;
+            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_4X4);
+
+            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player2_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+        } else {
+            if (mode == 'p') {
+                player2_move = get_player_move_xo(xo_board, SIZE_4X4);
+            } else {
+                // player2_move = xo_bot_turn();
+            }
+            xo_board[player2_move] = O;
+            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_4X4);
+            
+            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player2_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
+            player1_move = get_player_move_xo(xo_board, SIZE_4X4);
+            xo_board[player1_move] = X;
+            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_4X4);
+            
+            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player1_move);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+
         }
-        xo_board[player1_move] = X;
-        xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_4X4);
-        uint8_t player2_move = get_player_move_xo(xo_board, SIZE_4X4);
-        if (player2_move == 255) {
-            break;
-        }
-        xo_board[player2_move] = O;
-        xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_4X4);
     }
+
+    wait_for_input();
+    clear_lcd_screen();
+
+    return game_status; 
+}
+
+/***
+ * Function for a game of tic-tac-toe, containing multiple rounds.
+ * 
+ * @param size_option type of board and rules:
+ *                    0 - 3x3 (normal)
+ *                    1 - 4x4 easy (dimensions of 4x4, with win condition on line of 4)
+ *                    2 - 4x4 hard (dimensions of 4x4, with win condition on line of 3)
+ * @param mode b for pvbot, p for pvp
+ * @param diff type of bot algorithm
+ * 
+ */
+void play_xo(uint8_t size_option, char mode, char diff) {
+
+    // determines who goes first
+    // even -> player1 goes first
+    // odd  -> player2 goes first
+    uint8_t round_parity = 0;
+
+    uint8_t player1_score = 0;
+    uint8_t player2_score = 0;
+
+    char *player1_name = "";
+    char *player2_name = "";
+
+    if (mode == 'p') {
+        player1_name = "Player one";
+        player2_name = "Player two";
+    } else {
+        player1_name = "Player";
+        player2_name = "   Bot";
+    }
+
+    while (1) {
+        print_line_to_lcd(0, "Score");
+        print_score(1, player1_name, player1_score);
+        print_score(2, player2_name, player2_score);
+
+        wait_for_input();
+        clear_lcd_screen();
+
+        // print_line_to_lcd(1, "")
+        
+        wait_for_input();
+        clear_lcd_screen();
+
+        uint8_t result = 4;
+
+        switch (size_option) {
+            case 0: 
+                result = xo_3x3_round(mode, diff, round_parity);
+                break;
+            case 1:
+                result = xo_4x4_round(mode, diff, WIN_CONDITION_4, round_parity);
+                break;
+            case 2:
+                result = xo_4x4_round(mode, diff, WIN_CONDITION_3, round_parity);
+                break;
+        }
+            
+        if (result == GAME_DRAW) {
+            print_line_to_lcd(1, "It's a tie!");
+        }
+            
+        // round_parity (is true) => player1 and player2 are reversed
+        if ((result == 1 && !round_parity) || (result == 2 && round_parity)) {
+            if (mode == 'p') {
+                print_line_to_lcd(1, "Player one wins!");
+            } else {
+                print_line_to_lcd(1, "You win!");
+            }
+            player1_score++;
+        }
+
+        // round_parity (is true) => player1 and player2 are reversed
+        if ((result == 2 && !round_parity) || (result == 1 && round_parity)) {
+            if (mode == 'p') {
+                print_line_to_lcd(1, "Player two wins!");
+            } else {
+                print_line_to_lcd(1, "You lose!");
+            }
+            player2_score++;
+        }
+
+        wait_for_input();
+        clear_lcd_screen();
+
+        char *quit_play_options[] = {"continue", "return"};
+        print_line_to_lcd(0, "Keep playing?");
+        uint8_t quit_playing = menu_interface(quit_play_options, 0, TWO_OPTIONS);
+
+        if (quit_playing) {
+            break;
+        } else {
+            round_parity = !round_parity;
+            clear_lcd_screen();
+        }
+    }
+
+    clear_lcd_screen();
+
+    print_line_to_lcd(0, "Final Score");
+    print_score(1, player1_name, player1_score);
+    print_score(2, player2_name, player2_score);
+
     wait_for_input();
     clear_lcd_screen();
 }
@@ -167,20 +406,6 @@ void xo_4x4_round(char mode, char diff, uint8_t win_condition) {
  * 
  */
 void xo(char mode) {
-
-    // 3x3 = normal xo, 4x4 three = board is 4x4, with four in a row for win
-    // 4x4 four = board is 4x4, but win condition is three in a row
-    char *size_options[] = {"3x3", "4x4 easy", "4x4 hard", "return"};
-    char size_text[] = "Choose game type:";
-    uint8_t size_option = 0;
-        
-    print_line_to_lcd(1, size_text);
-    size_option = menu_interface(size_options, size_option, FOUR_OPTIONS);
-
-    if (size_option == 3) {
-        clear_lcd_screen();
-        return;
-    }
 
     char diff = ' ';
 
@@ -202,19 +427,24 @@ void xo(char mode) {
 
         diff = diff_modes[diff_option];
     }
+    
+    // 3x3 = normal xo, 4x4 three = board is 4x4, with four in a row for win
+    // 4x4 four = board is 4x4, but win condition is three in a row
+    char *size_options[] = {"3x3", "4x4 easy", "4x4 hard", "return"};
+    char size_text[] = "Choose game type:";
+    uint8_t size_option = 0;
+        
+    print_line_to_lcd(1, size_text);
+    size_option = menu_interface(size_options, size_option, FOUR_OPTIONS);
+
+    if (size_option == 3) {
+        clear_lcd_screen();
+        return;
+    }
 
     clear_lcd_screen();
 
-    
-    switch (size_option) {
-        case 0: 
-            xo_3x3_round(mode, diff);
-            break;
-        case 1:
-            // xo_4x4_round(mode, diff, WIN_CONDITION_4);
-            break;
-        case 2:
-            // xo_4x4_round(mode, diff, WIN_CONDITION_3);
-            break;
-    }
+    play_xo(size_option, mode, diff);
+
+    clear_lcd_screen();
 }

@@ -408,7 +408,7 @@ uint8_t blackjack_status(uint8_t player1_sum, uint8_t player2_sum, uint8_t both_
     // this is for the INCREDIBLY rare case where both players 
     // are dealt a blackjack at the start of the round
     if (player1_sum == BLACKJACK && player2_sum == BLACKJACK) {
-        return 0;
+        return GAME_DRAW;
     }
 
     // because each player has a separate action, only one player
@@ -423,7 +423,7 @@ uint8_t blackjack_status(uint8_t player1_sum, uint8_t player2_sum, uint8_t both_
 
     if (both_stand) {
         if (player1_sum == player2_sum) {
-            return 0;
+            return GAME_DRAW;
         }
 
         if (player1_sum > player2_sum) {
@@ -435,7 +435,7 @@ uint8_t blackjack_status(uint8_t player1_sum, uint8_t player2_sum, uint8_t both_
         }
     }
 
-    return 3;
+    return GAME_STATUS_CONTINUE;
 }
 
 /***
@@ -482,7 +482,7 @@ uint8_t blackjack_round(char mode, char diff, uint8_t *player1_sum, uint8_t *pla
     // changes when a game end condition has been met
     uint8_t game_status = blackjack_status(*player1_sum, *player2_sum, 0);
 
-    if (game_status != 3) {
+    if (game_status != GAME_STATUS_CONTINUE) {
         return game_status;
     }
 
@@ -520,7 +520,7 @@ uint8_t blackjack_round(char mode, char diff, uint8_t *player1_sum, uint8_t *pla
 
         game_status = blackjack_status(*player1_sum, *player2_sum, (player1_choice == 1 && player2_choice == 1));
 
-        if (game_status != 3) {
+        if (game_status != GAME_STATUS_CONTINUE) {
             return game_status;
         }
 
@@ -568,7 +568,7 @@ uint8_t blackjack_round(char mode, char diff, uint8_t *player1_sum, uint8_t *pla
 
         game_status = blackjack_status(*player1_sum, *player2_sum, (player1_choice == 1 && player2_choice == 1));
 
-        if (game_status != 3) {
+        if (game_status != GAME_STATUS_CONTINUE) {
             return game_status;
         }
     }
@@ -628,7 +628,7 @@ void play_blackjack(char mode, char diff) {
         wait_for_input();
         clear_lcd_screen();
             
-        if (result == 0) {
+        if (result == GAME_DRAW) {
             if (mode == 'p') {
                 print_line_to_lcd(1, "Players are tied!");
             } else {
