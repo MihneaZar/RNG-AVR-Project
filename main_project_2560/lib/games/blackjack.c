@@ -575,7 +575,7 @@ uint8_t blackjack_round(char mode, char diff, uint8_t *player1_sum, uint8_t *pla
 }
 
 /***
- * Function for a game of blackjack, containiing multiple rounds.
+ * Function for a game of blackjack, containing multiple rounds.
  * 
  * @param mode b for pvbot, p for pvp
  * @param diff type of bot algorithm

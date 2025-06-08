@@ -188,6 +188,16 @@ void print_rand_to_lcd(uint32_t rand, uint32_t max_rand) {
     print_line_to_lcd(1, rand_line);
 }
 
+/***
+ * Prints single character at given position (in characters, not pixels).
+ * 
+ */
+void print_char_at(char c, uint8_t char_x, uint8_t char_y) {
+    SSD1306_SetPosition(char_x * CHAR_LENGTH, char_y);
+    SSD1306_DrawChar(c);
+    // SSD1306_UpdateScreen(SSD1306_ADDR);
+}
+
 void print_line_to_lcd(uint8_t line, char text_line[]) {
     clear_lcd_line(line);
 
@@ -222,9 +232,9 @@ uint32_t get_value(char show_text[]) {
 
     char value_string[7]    = "000000";
     char position_string[7] = "^     ";
-    SSD1306_SetPosition(CHAR_PIXELS * 6, 1);
+    SSD1306_SetPosition(CHAR_LENGTH * 6, 1);
     SSD1306_DrawString(value_string);
-    SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+    SSD1306_SetPosition(CHAR_LENGTH * 6, 2);
     SSD1306_DrawString(position_string);
     SSD1306_UpdateScreen(SSD1306_ADDR);
 
@@ -235,7 +245,7 @@ uint32_t get_value(char show_text[]) {
                 position_string[digit_position] = ' ';
                 digit_position--;
                 position_string[digit_position] = '^';
-                SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+                SSD1306_SetPosition(CHAR_LENGTH * 6, 2);
                 SSD1306_DrawString(position_string);
                 SSD1306_UpdateScreen(SSD1306_ADDR);
             } else {
@@ -251,7 +261,7 @@ uint32_t get_value(char show_text[]) {
             } else {
                 value_string[digit_position]++;
             }
-            SSD1306_SetPosition(CHAR_PIXELS * 6, 1);
+            SSD1306_SetPosition(CHAR_LENGTH * 6, 1);
             SSD1306_DrawString(value_string);
             SSD1306_UpdateScreen(SSD1306_ADDR);
         }
@@ -260,7 +270,7 @@ uint32_t get_value(char show_text[]) {
             position_string[digit_position] = ' ';
             digit_position++;
             position_string[digit_position] = '^';
-            SSD1306_SetPosition(CHAR_PIXELS * 6, 2);
+            SSD1306_SetPosition(CHAR_LENGTH * 6, 2);
             SSD1306_DrawString(position_string);
             SSD1306_UpdateScreen(SSD1306_ADDR);
         }

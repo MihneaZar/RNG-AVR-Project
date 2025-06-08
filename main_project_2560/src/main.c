@@ -1,8 +1,8 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
-// #include <stdio.h>
+#include <stdio.h>
 
-// #include "usart.h"
+#include "usart.h"
 #include "menus.h"
 #include "timer.h"
 #include "ssd1306.h"
@@ -45,8 +45,8 @@ void set_pins() {
 void init_all() {
     sei();
     set_pins();
-    // USART0_init();
-    // USART0_use_stdio();
+    USART0_init();
+    USART0_use_stdio();
     SSD1306_Init(SSD1306_ADDR);
     SSD1306_ClearScreen();
     SSD1306_UpdateScreen(SSD1306_ADDR);

@@ -82,15 +82,16 @@ void main_menu() {
     uint32_t max_rand = 255;
 
     char welcome_text[] = "Welcome!";
+    print_line_to_lcd(0, welcome_text);
 
     while(1) {
-        print_line_to_lcd(0, welcome_text);
         option = menu_interface(options, option, FOUR_OPTIONS);
 
         // games or no games
         if (option == 0) {
             clear_lcd_line(1);
             game_menu();
+            print_line_to_lcd(0, welcome_text);
         }
 
         // show runtime
@@ -128,7 +129,7 @@ void main_menu() {
             if (new_max < MAX_RANDOM + 1) {
                 max_rand = new_max;
             }
-            print_options_to_lcd(options, option, FOUR_OPTIONS);
+            print_line_to_lcd(0, welcome_text);
         }
     }
 }
@@ -143,7 +144,7 @@ void game_menu() {
     char *game_options[] = {"rps", "xo", "blackjack", "return"};
     char game_text[] = "Choose a game:";
     uint8_t game_option = 0;
-    char *game_titles[] = {"RPS", "Tic-Tac-Toe", "Blackjack"};
+    char *game_titles[] = {"RPS", " Tic-Tac-Toe", "Blackjack"};
 
     char *versus_options[] = {"bot", "pvp", "", "return"};
     char versus_text[] = "Choose gamemode:";
