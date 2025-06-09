@@ -1,17 +1,16 @@
 #include "xo.h"
 
-void print_xo_borders(uint8_t size) {
-    uint8_t corner_x = CORNER_X_3x3;
-    uint8_t corner_y = CORNER_Y_3x3;
+/***
+ * Print tic-tac-toe grid.
+ * 
+ */
+void print_xo_borders() {
+    uint8_t corner_x = XO_CORNER_X;
+    uint8_t corner_y = XO_CORNER_Y;
 
-    if (size == SIZE_4X4) {
-        corner_x = CORNER_X_4x4;
-        corner_y = CORNER_Y_4x4;
-    }
-
-    for (int i = 0; i < size + 1; i++) {
-        SSD1306_DrawLine(corner_x, corner_x + 3 * size * CHAR_LENGTH, corner_y - (i > 0) + i * CHAR_HEIGHT, corner_y - (i > 0) + i * CHAR_HEIGHT);
-        SSD1306_DrawLine(corner_x + i * 3 * CHAR_LENGTH, corner_x + i * 3 * CHAR_LENGTH, corner_y, corner_y + size * CHAR_HEIGHT - 1);
+    for (int i = 0; i < XO_SIZE + 1; i++) {
+        SSD1306_DrawLine(corner_x, corner_x + XO_CELL_SIZE * XO_SIZE * CHAR_LENGTH, corner_y - (i > 0) + i * CHAR_HEIGHT, corner_y - (i > 0) + i * CHAR_HEIGHT);
+        SSD1306_DrawLine(corner_x + i * 3 * CHAR_LENGTH, corner_x + i * 3 * CHAR_LENGTH, corner_y, corner_y + XO_SIZE * CHAR_HEIGHT - 1);
     }
     SSD1306_UpdateScreen(SSD1306_ADDR);
 }
@@ -25,25 +24,18 @@ void print_xo_borders(uint8_t size) {
  *                  this means it needs to be placed one position back
  * 
  */
-void xo_place_char(char c, uint8_t position, uint8_t is_select, uint8_t size) {
-    uint8_t corner_x = CORNER_X_CHAR_3x3;
-    uint8_t corner_y = CORNER_Y_CHAR_3x3;
+void xo_place_char(char c, uint8_t position, uint8_t is_select) {
+    uint8_t corner_x = XO_CORNER_X_CHAR;
+    uint8_t corner_y = XO_CORNER_Y_CHAR;
 
-    uint8_t cell_corner_x = CORNER_X_3x3 + (position % size) * 3 * CHAR_LENGTH;
-    uint8_t cell_corner_y = CORNER_Y_3x3 + (position / size) * CHAR_HEIGHT - 1; 
-
-    if (size == SIZE_4X4) {
-        corner_x = CORNER_X_CHAR_4x4;
-        corner_y = CORNER_Y_CHAR_4x4;
-        cell_corner_x = CORNER_X_4x4 + (position % size) * 3 * CHAR_LENGTH;
-        cell_corner_y = CORNER_Y_4x4 + (position / size) * CHAR_HEIGHT - 1; 
-    }
+    uint8_t cell_corner_x = XO_CORNER_X + (position % XO_SIZE) * 3 * CHAR_LENGTH;
+    uint8_t cell_corner_y = XO_CORNER_Y + (position / XO_SIZE) * CHAR_HEIGHT - 1; 
 
     // adds one to position X or O in middle of grid cell
-    print_char_at(c, corner_x + (1 - is_select) + 3 * (position % size), corner_y + position / size);
+    print_char_at(c, corner_x + (1 - is_select) + 3 * (position % XO_SIZE), corner_y + position / XO_SIZE);
     
     // rebuilding border
-    SSD1306_DrawRectangle(cell_corner_x, cell_corner_x + 3 * CHAR_LENGTH, cell_corner_y + ((position / size) == 0), cell_corner_y + CHAR_HEIGHT);
+    SSD1306_DrawRectangle(cell_corner_x, cell_corner_x + 3 * CHAR_LENGTH, cell_corner_y + ((position / XO_SIZE) == 0), cell_corner_y + CHAR_HEIGHT);
     SSD1306_UpdateScreen(SSD1306_ADDR);
 }
 
@@ -51,8 +43,6 @@ void xo_place_char(char c, uint8_t position, uint8_t is_select, uint8_t size) {
  * Returns the status of the game.
  * 
  * @param board the xo board
- * @param size size of board
- * @param win_condition no. of X/O's in a line to win
  * @param last_placement position of last player's move
  * (function needs to check only if the last placement 
  * has changed the status of the game)
@@ -66,113 +56,55 @@ void xo_place_char(char c, uint8_t position, uint8_t is_select, uint8_t size) {
  *                 - 3 = game hasn't ended
  * 
  */
-uint8_t xo_status(uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t last_placement, uint8_t show_winner) {
+uint8_t xo_status(uint8_t board[], uint8_t last_placement, uint8_t show_winner) {
     uint8_t last_placed = board[last_placement];
 
-    // the difference between two positions on 
-    // first diagonal, second diagonal, vertical line and horizontal one
-    uint8_t step[] = {size + 1, size - 1, size, 1};
+    // coordinates of last placed X/O in x and y
+    uint8_t last_x = last_placement % XO_SIZE;
+    uint8_t last_y = last_placement / XO_SIZE;
 
-    // for every check except vertical, the stop back condition is % size == value from vector
-    // for vertical, it's / size == 0 (must be checked manually)
-    uint8_t stop_back_condition[] = {0, size - 1, 255, 0};
-
-    // for every check except vertical, the stop forward condition is % size == value from vector
-    // for vertical, it's / size == size - 1 (must be checked manually)
-    uint8_t stop_forward_condition[] = {size - 1, 0, 255, size - 1};
-
-    // first, it finds the lowest-value position to start checking from
-    // then, it checks for a line of at least win_condition elements 
-    // of the same value as the last on placed
-    for (int i = 0; i < 4; i++) {
-        uint8_t check_position = last_placement;
-        
-        if (stop_back_condition[i] != 255) {
-            uint8_t no_of_elem = 1;
-            while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position % size == stop_back_condition[i])) {
-                check_position -= step[i];
-                no_of_elem++;
+    // first diagonal
+    if (last_x == last_y) {
+        if (board[0] == last_placed && board[4] == last_placed && board[8] == last_placed) {
+            if (show_winner) {
+                SSD1306_DrawLine(XO_CORNER_X, XO_CORNER_X + 9 * CHAR_LENGTH, XO_CORNER_Y, XO_CORNER_Y + 3 * CHAR_HEIGHT - 2);
+                SSD1306_UpdateScreen(SSD1306_ADDR);
             }
-        } else {
-            uint8_t no_of_elem = 1;
-            while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position / size == 0)) {
-                check_position -= step[i];
-                no_of_elem++;
-            }
-        }
-
-        // specific issue with 0 and size - 1 positions on diagonals
-        if ((check_position == 0 && i == 1) || ((check_position == size - 1) && i == 0)) {
-            continue;
-        }
-
-        uint8_t start_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-        uint8_t start_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-
-        if (size == SIZE_4X4) {
-            start_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-            start_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-        }
-
-        // if this equals win_condition after one of the checks, last player wins
-        uint8_t in_a_row = 0;
-        if (stop_forward_condition[i] != 255) {
-            while (check_position < size * size) {
-                if (board[check_position] == last_placed) {
-                    in_a_row++;
-                    if (in_a_row == win_condition) {
-                        uint8_t end_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-                        uint8_t end_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-
-                        if (size == SIZE_4X4) {
-                            end_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-                            end_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-                        }
-                        if (show_winner) {
-                            SSD1306_DrawLine(start_center_x, end_center_x, start_center_y, end_center_y);
-                            SSD1306_UpdateScreen(SSD1306_ADDR);
-                        }
-                        return last_placed;
-                    }
-                } else {
-                    in_a_row = 0;
-                }
-                if ((check_position % size == stop_forward_condition[i])) {
-                    break;
-                }
-                check_position += step[i];
-            }
-        } else {
-            while (check_position < size * size) {
-                if (board[check_position] == last_placed) {
-                    in_a_row++;
-                    if (in_a_row == win_condition) {
-                        uint8_t end_center_x = CORNER_X_3x3 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-                        uint8_t end_center_y = CORNER_Y_3x3 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-
-                        if (size == SIZE_4X4) {
-                            end_center_x = CORNER_X_4x4 + (check_position % size) * 3 * CHAR_LENGTH + 1.5 * CHAR_LENGTH;
-                            end_center_y = CORNER_Y_4x4 + (check_position / size) * CHAR_HEIGHT + CHAR_HEIGHT / 2;
-                        }
-                        if (show_winner) {
-                            SSD1306_DrawLine(start_center_x, end_center_x, start_center_y, end_center_y);
-                            SSD1306_UpdateScreen(SSD1306_ADDR);
-                        }
-                        return last_placed;
-                    }
-                } else {
-                    in_a_row = 0;
-                }
-                if (check_position / size == size - 1) {
-                    break;
-                }
-                check_position += step[i];
-            }
+            return last_placed;
         }
     }
 
+    // second diagonal
+    if (last_x + last_y == XO_SIZE - 1) {
+        if (board[2] == last_placed && board[4] == last_placed && board[6] == last_placed) {
+            if (show_winner) {
+                SSD1306_DrawLine(XO_CORNER_X, XO_CORNER_X + 3 * XO_CELL_SIZE * CHAR_LENGTH, XO_CORNER_Y + 3 * CHAR_HEIGHT - 2, XO_CORNER_Y);
+                SSD1306_UpdateScreen(SSD1306_ADDR);
+            }
+            return last_placed;
+        }
+    }
+
+    // vertical check
+    if (board[last_x] == last_placed && board[XO_SIZE + last_x] == last_placed && board[2 * XO_SIZE + last_x] == last_placed) {
+        if (show_winner) {
+            SSD1306_DrawLine(XO_CORNER_X + XO_CELL_SIZE * CHAR_LENGTH * (last_x + 0.5), XO_CORNER_X + XO_CELL_SIZE * CHAR_LENGTH * (last_x + 0.5), XO_CORNER_Y, XO_CORNER_Y + 3 * CHAR_HEIGHT - 1);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        return last_placed;
+    }   
+
+    // horizontal check
+    if (board[XO_SIZE * last_y] == last_placed && board[XO_SIZE * last_y + 1] == last_placed && board[XO_SIZE * last_y + 2] == last_placed) {
+        if (show_winner) {
+            SSD1306_DrawLine(XO_CORNER_X, XO_CORNER_X + 3 * XO_CELL_SIZE * CHAR_LENGTH, XO_CORNER_Y + CHAR_HEIGHT * (last_y + 0.5) - 1, XO_CORNER_Y + CHAR_HEIGHT * (last_y + 0.5) - 1);
+            SSD1306_UpdateScreen(SSD1306_ADDR);
+        }
+        return last_placed;
+    }
+
     // if no one has won, check that there are still empty positions
-    for (int i = 0; i < size * size; i++) {
+    for (int i = 0; i < XO_SIZE * XO_SIZE; i++) {
 
         // game continues if there's at least one empty position 
         if (board[i] == EMPTY) {
@@ -187,7 +119,7 @@ uint8_t xo_status(uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t 
  * Interface for player to choose where to place their X or O.
  * 
  */
-uint8_t get_player_move_xo(uint8_t board[], uint8_t size) {
+uint8_t get_player_move_xo(uint8_t board[]) {
     uint8_t position = 0;
 
     // searches for first empty position
@@ -195,26 +127,26 @@ uint8_t get_player_move_xo(uint8_t board[], uint8_t size) {
         position++;
         
         // if no position is available, return 255 (error)
-        if (position == size * size) {
+        if (position == XO_SIZE * XO_SIZE) {
             return 255;
         }
     }
 
     board[position] = SELECT;
-    xo_place_char('>', position, IS_SELECT, size);
+    xo_place_char('>', position, IS_SELECT);
 
     while (1) {
         // previous position
         if (left_blue_button) {
             left_blue_button = 0;
             board[position] = EMPTY;
-            xo_place_char(' ', position, IS_SELECT, size);
-            position = PREV_OPTION(position, size * size); 
+            xo_place_char(' ', position, IS_SELECT);
+            position = PREV_OPTION(position, XO_SIZE * XO_SIZE); 
             while (board[position] != EMPTY) {
-                position = PREV_OPTION(position, size * size); 
+                position = PREV_OPTION(position, XO_SIZE * XO_SIZE); 
             }
             board[position] = SELECT;
-            xo_place_char('>', position, IS_SELECT, size);
+            xo_place_char('>', position, IS_SELECT);
         }
 
         // selects position
@@ -226,16 +158,16 @@ uint8_t get_player_move_xo(uint8_t board[], uint8_t size) {
         if (right_blue_button) {
             right_blue_button = 0;
             board[position] = EMPTY;
-            xo_place_char(' ', position, IS_SELECT, size);
-            position = NEXT_OPTION(position, size * size); 
+            xo_place_char(' ', position, IS_SELECT);
+            position = NEXT_OPTION(position, XO_SIZE * XO_SIZE); 
             while (board[position] != EMPTY) {
-                position = NEXT_OPTION(position, size * size); 
+                position = NEXT_OPTION(position, XO_SIZE * XO_SIZE); 
             }
             board[position] = SELECT;
-            xo_place_char('>', position, IS_SELECT, size);
+            xo_place_char('>', position, IS_SELECT);
         }
     }
-    xo_place_char(' ', position, IS_SELECT, size);
+    xo_place_char(' ', position, IS_SELECT);
 
     return position;
 }
@@ -250,23 +182,39 @@ uint8_t get_player_move_xo(uint8_t board[], uint8_t size) {
  * @return uint8_t position of where it places
  * 
  */
-uint8_t xo_bot_turn(char diff, uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t bot_board[], uint8_t last_player_move) {
+uint8_t xo_bot_turn(char diff, uint8_t board[]) {
     if (diff == 'r') {
-        uint8_t random_choice = random(0, size * size - 1);
+        uint8_t random_choice = random(0, XO_SIZE * XO_SIZE - 1);
         while (board[random_choice] != EMPTY) {
-            random_choice = random(0, size * size - 1);
+            random_choice = random(0, XO_SIZE * XO_SIZE - 1);
         }
         return random_choice;
     }
 
+    // check if there is a spot where bot would win
+    for (int position = 0; position < XO_SIZE * XO_SIZE; position++) {
+        if (board[position] == EMPTY) {
+
+            // simulate player move
+            board[position] = O;
+            uint8_t get_status = xo_status(board, position, DONT_SHOW_WINNER);
+            board[position] = EMPTY;
+
+            // player wins
+            if (get_status == O) {
+                return position;
+            }
+        }
+    }
+
     // check if there is a spot where player would win
     // if there are multiple, the bot loses anyway
-    for (int position = 0; position < size * size; position++) {
+    for (int position = 0; position < XO_SIZE * XO_SIZE; position++) {
         if (board[position] == EMPTY) {
 
             // simulate player move
             board[position] = X;
-            uint8_t get_status = xo_status(board, size, win_condition, position, DONT_SHOW_WINNER);
+            uint8_t get_status = xo_status(board, position, DONT_SHOW_WINNER);
             board[position] = EMPTY;
 
             // player wins
@@ -276,132 +224,79 @@ uint8_t xo_bot_turn(char diff, uint8_t board[], uint8_t size, uint8_t win_condit
         }
     }
 
-    // if the player will not win next move
+    // if the player will not win next move and bot can't win,
     // choose a random spot
     if (diff == 'b') {
-        uint8_t random_choice = random(0, size * size - 1);
+        uint8_t random_choice = random(0, XO_SIZE * XO_SIZE - 1);
         while (board[random_choice] != EMPTY) {
-            random_choice = random(0, size * size - 1);
+            random_choice = random(0, XO_SIZE * XO_SIZE - 1);
         }
         return random_choice;
     }
 
-    // for perfect, it needs to update the positions that have lost potential winning rows
-    // because of the player's last move; this is similar to checking if there are any winners
+    // for perfect, it calculates the position with highest possible wins 
+    // (similar to checking if someone has won)
     if (diff == 'p') {
+        uint8_t best_position = 255;
+        uint8_t highest_wins = 0;
+        for (int position = 0; position < XO_SIZE * XO_SIZE; position++) {
 
-        // the difference between two positions on 
-        // first diagonal, second diagonal, vertical line and horizontal one
-        uint8_t step[] = {size + 1, size - 1, size, 1};
-
-        // for every check except vertical, the stop back condition is % size == value from vector
-        // for vertical, it's / size == 0 (must be checked manually)
-        uint8_t stop_back_condition[] = {0, size - 1, 255, 0};
-
-        // for every check except vertical, the stop forward condition is % size == value from vector
-        // for vertical, it's / size == size - 1 (must be checked manually)
-        uint8_t stop_forward_condition[] = {size - 1, 0, 255, size - 1};
-
-        // first, it finds the lowest-value position to start checking from
-        // then, it checks for a line of at least win_condition elements 
-        // of the same value as the last on placed
-        for (int i = 0; i < 4; i++) {
-            uint8_t check_position = last_player_move;
-            
-            // first, going towards lower value and taking out 
-            if (stop_back_condition[i] != 255) {
-                uint8_t no_of_elem = 1;
-                while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position % size == stop_back_condition[i])) {
-                    check_position -= step[i];
-                    no_of_elem++;
-                }
-            } else {
-                uint8_t no_of_elem = 1;
-                while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position / size == 0)) {
-                    check_position -= step[i];
-                    no_of_elem++;
-                }
-            }
-
-            // specific issue with 0 and size - 1 positions on diagonals
-            if ((check_position == 0 && i == 1) || ((check_position == size - 1) && i == 0)) {
+            // skips non-empty positions
+            if (board[position] != EMPTY) {
                 continue;
             }
 
-            // basically, if there isn't already an X blocking the line (other than the one that was just placed)
-            // all of the positions on the line go down in value by one
-            uint8_t first_position = check_position;
-            uint8_t already_blocked = 0;
-            if (stop_forward_condition[i] != 255) {
-                while (check_position < size * size) {
-                    if (board[check_position] == X && check_position != last_player_move) {
-                        already_blocked = 1;
-                    }
-                    if ((check_position % size == stop_forward_condition[i])) {
-                        break;
-                    }
-                    check_position += step[i];
-                }
-            } else {
-                while (check_position < size * size) {
-                    if (board[check_position] == X && check_position != last_player_move) {
-                        already_blocked = 1;
-                    }
-                    if (check_position / size == size - 1) {
-                        break;
-                    }
-                    check_position += step[i];
+            uint8_t possible_wins = 0;
+
+            // coordinates of position in x and y
+            uint8_t position_x = position % XO_SIZE;
+            uint8_t position_y = position / XO_SIZE;
+
+            // if a line has at least an X, then it's blocked and can't be used to win
+
+            // first diagonal
+            if (position_x == position_y) {
+                if (board[0] != X && board[4] != X && board[8] != X) {
+                    possible_wins++;
                 }
             }
 
-            if (already_blocked) {
-                continue;
-            }
-
-            check_position = first_position;
-            if (stop_forward_condition[i] != 255) {
-                while (check_position < size * size) {
-                    if (bot_board[check_position] > 0) {
-                        bot_board[check_position]--;
-                    }
-                    if ((check_position % size == stop_forward_condition[i])) {
-                        break;
-                    }
-                    check_position += step[i];
-                }
-            } else {
-                while (check_position < size * size) {
-                    if (bot_board[check_position] > 0) {
-                        bot_board[check_position]--;
-                    }
-                    if (check_position / size == size - 1) {
-                        break;
-                    }
-                    check_position += step[i];
+            // second diagonal
+            if (position_x + position_y == XO_SIZE - 1) {
+                if (board[2] != X && board[4] != X && board[6] != X) {
+                    possible_wins++;
                 }
             }
 
-            // finally, the actual calculation of the move: the position with the maximum winning potential
-            uint8_t best_position = 0;
-            uint8_t best_win_potential = 0;
-            for (int i = 0; i < size * size; i++) {
-                
-                // ignoring non-empty spots
-                if ((board[i] == EMPTY) && (bot_board[i] >= best_win_potential)) {
-                    best_position = i;
-                    best_win_potential = i;
-                }
+            // vertical check
+            if (board[position_x] != X && board[XO_SIZE + position_x] != X && board[2 * XO_SIZE + position_x] != X) {
+                possible_wins++;
+            }   
+
+            // horizontal check
+            if (board[XO_SIZE * position_y] != X && board[XO_SIZE * position_y + 1] != X && board[XO_SIZE * position_y + 2] != X) {
+                possible_wins++;
             }
 
-            return best_position;
+            // if the bot found a better position, it chooses it
+            if (best_position == 255 || possible_wins > highest_wins) {
+                highest_wins = possible_wins;
+                best_position = position;
+            }
         }
+        return best_position;
     } 
 
-    return 0;
+    // in case it somehow gets here (it shouldn't)
+    return xo_bot_turn('r', board);
 }
 
 /***
  * Plays a round of 3x3 tic-tac-toe, pvp or pvbot.
+ * 
+ * @param infinite if 1, game is infinite 
+ *                  (after a player has placed three X/O's,
+ *                  their earliest placement is removed)
  * 
  * @param round_parity determines who goes first:
  *                     0 - player one / player goes first
@@ -413,190 +308,165 @@ uint8_t xo_bot_turn(char diff, uint8_t board[], uint8_t size, uint8_t win_condit
  *         2 - player two / bot 
  * 
  */
-uint8_t xo_3x3_round(char mode, char diff, uint8_t round_parity) {
-    print_xo_borders(SIZE_3X3);
-    uint8_t xo_board[SIZE_3X3 * SIZE_3X3] = {EMPTY, EMPTY, EMPTY,   
-                                             EMPTY, EMPTY, EMPTY,   
-                                             EMPTY, EMPTY, EMPTY};
+uint8_t xo_round(uint8_t infinite, char mode, char diff, uint8_t round_parity) {
+    print_xo_borders(XO_SIZE);
+    uint8_t xo_board[XO_SIZE * XO_SIZE] = { EMPTY, EMPTY, EMPTY,   
+                                            EMPTY, EMPTY, EMPTY,   
+                                            EMPTY, EMPTY, EMPTY};
 
     uint8_t game_status = GAME_STATUS_CONTINUE;
 
-    uint8_t player1_move = SIZE_3X3;
+    uint8_t player1_move = 0;
     uint8_t player2_move = 0;
 
-    uint8_t bot_board[SIZE_3X3 * SIZE_3X3] = {3, 2, 3,
-                                              2, 4, 2,
-                                              3, 2, 3};
+    // movement queue for infinite version
+    uint8_t infinite_queue[XO_INFINITE_MOVES];
+    uint8_t queue_position = 0;
+    uint8_t infinite_remove = 0;
 
     while (1) {
         if (round_parity == 0) {
-            player1_move = get_player_move_xo(xo_board, SIZE_3X3);
+            if (infinite_remove) {
+                xo_board[infinite_queue[queue_position]] = EMPTY;
+                xo_place_char(' ', infinite_queue[queue_position], IS_NOT_SELECT);
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
+            }
+
+            player1_move = get_player_move_xo(xo_board);
             xo_board[player1_move] = X;
-            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_3X3);
+            xo_place_char('X', player1_move, IS_NOT_SELECT);
             
-            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player1_move, SHOW_WINNER);
+            game_status = xo_status(xo_board, player1_move, SHOW_WINNER);
             if (game_status != GAME_STATUS_CONTINUE) {
                 break;
+            }
+
+            if (infinite) {
+                infinite_queue[queue_position++] = player1_move;
+            }
+
+
+            if (infinite_remove) {
+                xo_board[infinite_queue[queue_position]] = EMPTY;
+                xo_place_char(' ', infinite_queue[queue_position], IS_NOT_SELECT);
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
             }
 
             if (mode == 'p') {
-                player2_move = get_player_move_xo(xo_board, SIZE_3X3);
+                player2_move = get_player_move_xo(xo_board);
             } else {
-                player2_move = xo_bot_turn(diff, xo_board, SIZE_3X3, WIN_CONDITION_3, bot_board, player1_move);
+                player2_move = xo_bot_turn(diff, xo_board);
+                if (!infinite_remove) {
+                    uint32_t wait_a_moment = systicks;
+                    while(!SYSTICKS_PASSED(wait_a_moment, 750));
+                }
             }
             xo_board[player2_move] = O;
-            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_3X3);
+            xo_place_char('O', player2_move, IS_NOT_SELECT);
 
-            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player2_move, SHOW_WINNER);
+            if (mode == 'b') {
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
+            }
+
+            game_status = xo_status(xo_board, player2_move, SHOW_WINNER);
             if (game_status != GAME_STATUS_CONTINUE) {
                 break;
             }
+
+            if (infinite) {
+                infinite_queue[queue_position++] = player2_move;
+                if (queue_position == XO_INFINITE_MOVES) {
+                    queue_position = 0;
+                    if (!infinite_remove) {
+                        infinite_remove = 1;
+                    }
+                }
+            }
+
         } else {
-            if (mode == 'p') {
-                player2_move = get_player_move_xo(xo_board, SIZE_3X3);
-            } else {
-                player2_move = xo_bot_turn(diff, xo_board, SIZE_3X3, WIN_CONDITION_3, bot_board, player1_move);
-            }
-            xo_board[player2_move] = O;
-            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_3X3);
-            
-            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player2_move, SHOW_WINNER);
-            if (game_status != GAME_STATUS_CONTINUE) {
-                break;
+            if (infinite_remove) {
+                xo_board[infinite_queue[queue_position]] = EMPTY;
+                xo_place_char(' ', infinite_queue[queue_position], IS_NOT_SELECT);
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
             }
 
-            player1_move = get_player_move_xo(xo_board, SIZE_3X3);
-            xo_board[player1_move] = X;
-            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_3X3);
+            if (mode == 'p') {
+                player2_move = get_player_move_xo(xo_board);
+            } else {
+                player2_move = xo_bot_turn(diff, xo_board);
+                if (!infinite_remove) {
+                    uint32_t wait_a_moment = systicks;
+                    while(!SYSTICKS_PASSED(wait_a_moment, 750));
+                }
+            }
+            xo_board[player2_move] = O;
+            xo_place_char('O', player2_move, IS_NOT_SELECT);
+
+            if (mode == 'b') {
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
+            }
             
-            game_status = xo_status(xo_board, SIZE_3X3, WIN_CONDITION_3, player1_move, SHOW_WINNER);
+            game_status = xo_status(xo_board, player2_move, SHOW_WINNER);
             if (game_status != GAME_STATUS_CONTINUE) {
                 break;
+            }
+            
+            if (infinite) {
+                infinite_queue[queue_position++] = player2_move;
+            }
+
+
+            if (infinite_remove) {
+                xo_board[infinite_queue[queue_position]] = EMPTY;
+                xo_place_char(' ', infinite_queue[queue_position], IS_NOT_SELECT);
+                uint32_t wait_a_moment = systicks;
+                while(!SYSTICKS_PASSED(wait_a_moment, 750));
+            }
+
+            player1_move = get_player_move_xo(xo_board);
+            xo_board[player1_move] = X;
+            xo_place_char('X', player1_move, IS_NOT_SELECT);
+            
+            game_status = xo_status(xo_board, player1_move, SHOW_WINNER);
+            if (game_status != GAME_STATUS_CONTINUE) {
+                break;
+            }
+            
+            if (infinite) {
+                infinite_queue[queue_position++] = player1_move;
+                if (queue_position == XO_INFINITE_MOVES) {
+                    queue_position = 0;
+                    if (!infinite_remove) {
+                        infinite_remove = 1;
+                    }
+                }
             }
         }
     }
     
-    wait_for_input();
+    uint32_t wait_a_moment = systicks;
+    while(!SYSTICKS_PASSED(wait_a_moment, 1000));
     clear_lcd_screen();
 
     return game_status;
 }
 
 /***
- * Plays a round of 4x4 tic-tac-toe, pvp or pvbot.
- * 
- * @param win_condition number of X/O's to get in a row for win (3 or 4).
- * 
- * @return winner or draw:
- *         0 - draw
- *         1 - player one / player
- *         2 - player two / bot 
- * 
- */
-uint8_t xo_4x4_round(char mode, char diff, uint8_t win_condition, uint8_t round_parity) {
-    print_xo_borders(SIZE_4X4);
-    uint8_t xo_board[SIZE_4X4 * SIZE_4X4] = {EMPTY, EMPTY, EMPTY, EMPTY,
-                                             EMPTY, EMPTY, EMPTY, EMPTY,
-                                             EMPTY, EMPTY, EMPTY, EMPTY,
-                                             EMPTY, EMPTY, EMPTY, EMPTY};
-
-    uint8_t game_status = GAME_STATUS_CONTINUE;
-
-    uint8_t player1_move = SIZE_4X4;
-    uint8_t player2_move = 0;
-
-    // the map for the perfect bot strategy
-    // for each position, it contains the amount of
-    // different possible wins it could get
-    uint8_t bot_board[SIZE_4X4 * SIZE_4X4];
-
-    if (win_condition == WIN_CONDITION_3) {
-        uint8_t bot_board_3[SIZE_4X4 * SIZE_4X4] = {3, 4, 4, 3,
-                                                    4, 7, 7, 4,
-                                                    4, 7, 7, 4,
-                                                    3, 4, 4, 3};
-
-        for (int i = 0; i < SIZE_4X4 * SIZE_4X4; i++) {
-            bot_board[i] = bot_board_3[i];
-        }
-    } else {
-        uint8_t bot_board_4[SIZE_4X4 * SIZE_4X4] = {3, 2, 2, 3,
-                                                    2, 3, 3, 2,
-                                                    2, 3, 3, 2,
-                                                    3, 2, 2, 3};
-
-        for (int i = 0; i < SIZE_4X4 * SIZE_4X4; i++) {
-            bot_board[i] = bot_board_4[i];
-        }
-    }
-
-    while (1) {
-        if (round_parity == 0) {
-            player1_move = get_player_move_xo(xo_board, SIZE_4X4);
-            xo_board[player1_move] = X;
-            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_4X4);
-            
-            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player1_move, SHOW_WINNER);
-            if (game_status != GAME_STATUS_CONTINUE) {
-                break;
-            }
-
-            if (mode == 'p') {
-                player2_move = get_player_move_xo(xo_board, SIZE_4X4);
-            } else {
-                player2_move = xo_bot_turn(diff, xo_board, SIZE_4X4, win_condition, bot_board, player1_move);
-            }
-            xo_board[player2_move] = O;
-            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_4X4);
-
-            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player2_move, SHOW_WINNER);
-            if (game_status != GAME_STATUS_CONTINUE) {
-                break;
-            }
-        } else {
-            if (mode == 'p') {
-                player2_move = get_player_move_xo(xo_board, SIZE_4X4);
-            } else {
-                player2_move = xo_bot_turn(diff, xo_board, SIZE_4X4, win_condition, bot_board, player1_move);
-            }
-            xo_board[player2_move] = O;
-            xo_place_char('O', player2_move, IS_NOT_SELECT, SIZE_4X4);
-            
-            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player2_move, SHOW_WINNER);
-            if (game_status != GAME_STATUS_CONTINUE) {
-                break;
-            }
-
-            player1_move = get_player_move_xo(xo_board, SIZE_4X4);
-            xo_board[player1_move] = X;
-            xo_place_char('X', player1_move, IS_NOT_SELECT, SIZE_4X4);
-            
-            game_status = xo_status(xo_board, SIZE_4X4, win_condition, player2_move, SHOW_WINNER);
-            if (game_status != GAME_STATUS_CONTINUE) {
-                break;
-            }
-
-        }
-    }
-
-    wait_for_input();
-    clear_lcd_screen();
-
-    return game_status; 
-}
-
-/***
  * Function for a game of tic-tac-toe, containing multiple rounds.
  * 
- * @param size_option type of board and rules:
- *                    0 - 3x3 (normal)
- *                    1 - 4x4 easy (dimensions of 4x4, with win condition on line of 4)
- *                    2 - 4x4 hard (dimensions of 4x4, with win condition on line of 3)
+ * @param game_type type of xo game:
+ *                    0 - normal
+ *                    1 - infinite
  * @param mode b for pvbot, p for pvp
  * @param diff type of bot algorithm
  * 
  */
-void play_xo(uint8_t size_option, char mode, char diff) {
+void play_xo(uint8_t game_type, char mode, char diff) {
 
     // determines who goes first
     // even -> player1 goes first
@@ -625,6 +495,8 @@ void play_xo(uint8_t size_option, char mode, char diff) {
         wait_for_input();
         clear_lcd_screen();
 
+        print_line_to_lcd(0, "Tic-tac-toe");
+
         if (mode == 'p') {
             if (!round_parity) {
                 print_line_to_lcd(1, player1_name);
@@ -647,19 +519,9 @@ void play_xo(uint8_t size_option, char mode, char diff) {
         clear_lcd_line(1);
         clear_lcd_line(2);
 
-        uint8_t result = 4;
+        uint8_t result = xo_round(game_type, mode, diff, round_parity);
 
-        switch (size_option) {
-            case 0: 
-                result = xo_3x3_round(mode, diff, round_parity);
-                break;
-            case 1:
-                result = xo_4x4_round(mode, diff, WIN_CONDITION_4, round_parity);
-                break;
-            case 2:
-                result = xo_4x4_round(mode, diff, WIN_CONDITION_3, round_parity);
-                break;
-        }
+        print_line_to_lcd(0, "Tic-tac-toe");
             
         if (result == GAME_DRAW) {
             print_line_to_lcd(1, "It's a tie!");
@@ -686,7 +548,8 @@ void play_xo(uint8_t size_option, char mode, char diff) {
         }
 
         wait_for_input();
-        clear_lcd_screen();
+        clear_lcd_line(0);
+        clear_lcd_line(1);
 
         char *quit_play_options[] = {"continue", "return"};
         print_line_to_lcd(0, "Keep playing?");
@@ -741,21 +604,21 @@ void xo(char mode) {
     
     // 3x3 = normal xo, 4x4 three = board is 4x4, with four in a row for win
     // 4x4 four = board is 4x4, but win condition is three in a row
-    char *size_options[] = {"3x3", "4x4 easy", "4x4 hard", "return"};
-    char size_text[] = "Choose game type:";
-    uint8_t size_option = 0;
+    char *game_types[] = {"normal", "infinte", "", "return"};
+    char game_text[] = "Choose game type:";
+    uint8_t game_option = 0;
         
-    print_line_to_lcd(1, size_text);
-    size_option = menu_interface(size_options, size_option, FOUR_OPTIONS);
+    print_line_to_lcd(1, game_text);
+    game_option = menu_interface(game_types, game_option, FOUR_OPTIONS);
 
-    if (size_option == 3) {
+    if (game_option == 3) {
         clear_lcd_screen();
         return;
     }
 
     clear_lcd_screen();
 
-    play_xo(size_option, mode, diff);
+    play_xo(game_option, mode, diff);
 
     clear_lcd_screen();
 }

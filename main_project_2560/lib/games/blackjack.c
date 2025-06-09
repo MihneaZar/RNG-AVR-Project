@@ -626,7 +626,8 @@ void play_blackjack(char mode, char diff) {
         print_score(2, player2_sum_line, player2_sum);
 
         wait_for_input();
-        clear_lcd_screen();
+        clear_lcd_line(1);
+        clear_lcd_line(2);
             
         if (result == GAME_DRAW) {
             if (mode == 'p') {
@@ -656,8 +657,9 @@ void play_blackjack(char mode, char diff) {
         }
 
         wait_for_input();
-
-        clear_lcd_screen();
+        clear_lcd_line(0);
+        clear_lcd_line(1);
+        clear_lcd_line(2);
 
         char *quit_play_options[] = {"continue", "return"};
         print_line_to_lcd(0, "Keep playing?");
