@@ -101,7 +101,7 @@ uint8_t xo_status(uint8_t board[], uint8_t size, uint8_t win_condition, uint8_t 
             }
         }
 
-        // specific issue with 0 and size - 1 positions
+        // specific issue with 0 and size - 1 positions on diagonals
         if ((check_position == 0 && i == 1) || ((check_position == size - 1) && i == 0)) {
             continue;
         }
@@ -285,6 +285,117 @@ uint8_t xo_bot_turn(char diff, uint8_t board[], uint8_t size, uint8_t win_condit
         }
         return random_choice;
     }
+
+    // for perfect, it needs to update the positions that have lost potential winning rows
+    // because of the player's last move; this is similar to checking if there are any winners
+    if (diff == 'p') {
+
+        // the difference between two positions on 
+        // first diagonal, second diagonal, vertical line and horizontal one
+        uint8_t step[] = {size + 1, size - 1, size, 1};
+
+        // for every check except vertical, the stop back condition is % size == value from vector
+        // for vertical, it's / size == 0 (must be checked manually)
+        uint8_t stop_back_condition[] = {0, size - 1, 255, 0};
+
+        // for every check except vertical, the stop forward condition is % size == value from vector
+        // for vertical, it's / size == size - 1 (must be checked manually)
+        uint8_t stop_forward_condition[] = {size - 1, 0, 255, size - 1};
+
+        // first, it finds the lowest-value position to start checking from
+        // then, it checks for a line of at least win_condition elements 
+        // of the same value as the last on placed
+        for (int i = 0; i < 4; i++) {
+            uint8_t check_position = last_player_move;
+            
+            // first, going towards lower value and taking out 
+            if (stop_back_condition[i] != 255) {
+                uint8_t no_of_elem = 1;
+                while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position % size == stop_back_condition[i])) {
+                    check_position -= step[i];
+                    no_of_elem++;
+                }
+            } else {
+                uint8_t no_of_elem = 1;
+                while ((check_position - step[i] >= 0) && (no_of_elem < win_condition) && !(check_position / size == 0)) {
+                    check_position -= step[i];
+                    no_of_elem++;
+                }
+            }
+
+            // specific issue with 0 and size - 1 positions on diagonals
+            if ((check_position == 0 && i == 1) || ((check_position == size - 1) && i == 0)) {
+                continue;
+            }
+
+            // basically, if there isn't already an X blocking the line (other than the one that was just placed)
+            // all of the positions on the line go down in value by one
+            uint8_t first_position = check_position;
+            uint8_t already_blocked = 0;
+            if (stop_forward_condition[i] != 255) {
+                while (check_position < size * size) {
+                    if (board[check_position] == X && check_position != last_player_move) {
+                        already_blocked = 1;
+                    }
+                    if ((check_position % size == stop_forward_condition[i])) {
+                        break;
+                    }
+                    check_position += step[i];
+                }
+            } else {
+                while (check_position < size * size) {
+                    if (board[check_position] == X && check_position != last_player_move) {
+                        already_blocked = 1;
+                    }
+                    if (check_position / size == size - 1) {
+                        break;
+                    }
+                    check_position += step[i];
+                }
+            }
+
+            if (already_blocked) {
+                continue;
+            }
+
+            check_position = first_position;
+            if (stop_forward_condition[i] != 255) {
+                while (check_position < size * size) {
+                    if (bot_board[check_position] > 0) {
+                        bot_board[check_position]--;
+                    }
+                    if ((check_position % size == stop_forward_condition[i])) {
+                        break;
+                    }
+                    check_position += step[i];
+                }
+            } else {
+                while (check_position < size * size) {
+                    if (bot_board[check_position] > 0) {
+                        bot_board[check_position]--;
+                    }
+                    if (check_position / size == size - 1) {
+                        break;
+                    }
+                    check_position += step[i];
+                }
+            }
+
+            // finally, the actual calculation of the move: the position with the maximum winning potential
+            uint8_t best_position = 0;
+            uint8_t best_win_potential = 0;
+            for (int i = 0; i < size * size; i++) {
+                
+                // ignoring non-empty spots
+                if ((board[i] == EMPTY) && (bot_board[i] >= best_win_potential)) {
+                    best_position = i;
+                    best_win_potential = i;
+                }
+            }
+
+            return best_position;
+        }
+    } 
 
     return 0;
 }
